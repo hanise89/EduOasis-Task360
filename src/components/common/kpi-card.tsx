@@ -13,55 +13,57 @@ interface KpiCardProps {
   trend?: "up" | "down" | "flat";
   trendLabel?: string;
   accent?: "primary" | "accent" | "success" | "warning" | "danger" | "neutral";
+  index?: number;
   onClick?: () => void;
 }
 
-const ACCENT_MAP = {
-  primary: { bg: "bg-primary/10", text: "text-primary", ring: "ring-primary/20" },
-  accent: { bg: "bg-accent/10", text: "text-accent", ring: "ring-accent/20" },
-  success: { bg: "bg-status-success/10", text: "text-status-success", ring: "ring-status-success/20" },
-  warning: { bg: "bg-status-warning/15", text: "text-status-warning", ring: "ring-status-warning/20" },
-  danger: { bg: "bg-status-danger/10", text: "text-status-danger", ring: "ring-status-danger/20" },
-  neutral: { bg: "bg-muted", text: "text-muted-foreground", ring: "ring-border" },
+const ACCENT_TEXT = {
+  primary: "text-primary",
+  accent: "text-accent",
+  success: "text-status-success",
+  warning: "text-status-warning",
+  danger: "text-status-danger",
+  neutral: "text-muted-foreground",
 };
 
-export function KpiCard({ label, value, hint, icon: Icon, trend, trendLabel, accent = "primary", onClick }: KpiCardProps) {
-  const a = ACCENT_MAP[accent];
+export function KpiCard({ label, value, hint, icon: Icon, trend, trendLabel, accent = "primary", index, onClick }: KpiCardProps) {
+  const accentText = ACCENT_TEXT[accent];
   return (
     <Card
-      className={cn("p-4 lg:p-5 card-flat relative overflow-hidden", onClick && "cursor-pointer hover:shadow-md transition-shadow")}
+      className={cn(
+        "p-4 lg:p-5 card-flat rounded-md bg-card relative overflow-hidden",
+        onClick && "cursor-pointer hover:border-border-strong transition-colors"
+      )}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground truncate">{label}</div>
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="text-2xl lg:text-3xl font-semibold tracking-tight mt-1.5 tabular-nums"
-          >
-            {value}
-          </motion.div>
-          {(hint || trend) && (
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs">
-              {trend && (
-                <span className={cn("inline-flex items-center gap-0.5 font-medium", trend === "up" ? "text-status-success" : trend === "down" ? "text-status-danger" : "text-muted-foreground")}>
-                  {trend === "up" ? <TrendingUp className="w-3 h-3" /> : trend === "down" ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                </span>
-              )}
-              {hint && <span className="text-muted-foreground truncate">{hint}</span>}
-              {trendLabel && <span className="text-muted-foreground">{trendLabel}</span>}
-            </div>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {index !== undefined && (
+            <span className="index-numeral text-[11px] leading-none select-none">{String(index).padStart(2, "0")}</span>
           )}
+          <div className="eyebrow truncate">{label}</div>
         </div>
-        {Icon && (
-          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", a.bg, a.text)}>
-            <Icon className="w-4 h-4" />
-          </div>
-        )}
+        {Icon && <Icon className={cn("w-3.5 h-3.5 shrink-0", accentText)} />}
       </div>
-      <div className={cn("absolute inset-x-0 top-0 h-0.5", a.bg.replace("/10", "").replace("/15", ""))} />
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="text-2xl lg:text-[28px] font-semibold tracking-tight num-display leading-none"
+      >
+        {value}
+      </motion.div>
+      {(hint || trend) && (
+        <div className="flex items-center gap-1.5 mt-2 text-xs">
+          {trend && (
+            <span className={cn("inline-flex items-center gap-0.5 font-medium", trend === "up" ? "text-status-success" : trend === "down" ? "text-status-danger" : "text-muted-foreground")}>
+              {trend === "up" ? <TrendingUp className="w-3 h-3" /> : trend === "down" ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+            </span>
+          )}
+          {hint && <span className="text-muted-foreground truncate">{hint}</span>}
+          {trendLabel && <span className="text-muted-foreground">{trendLabel}</span>}
+        </div>
+      )}
     </Card>
   );
 }

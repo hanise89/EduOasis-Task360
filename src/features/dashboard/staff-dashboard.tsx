@@ -53,12 +53,10 @@ export function StaffDashboard() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-end justify-between gap-3 flex-wrap pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Papan Pemuka Staf</span>
-          </div>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">Selamat datang, {user.name.split(" ")[0]}</h1>
+          <div className="eyebrow">Papan Pemuka Staf</div>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1">Selamat datang, {user.name.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{user.position}</p>
         </div>
         <PeriodSelector />
@@ -66,20 +64,20 @@ export function StaffDashboard() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <KpiCard label="Tugasan Hari Ini" value={k?.today ?? 0} icon={Target} accent="primary" hint="perlu siap hari ini" />
-        <KpiCard label="Tertunggak" value={k?.overdue ?? 0} icon={Clock} accent={k?.overdue ? "danger" : "neutral"} hint="tugasan lewat" onClick={() => setView("tasks")} />
-        <KpiCard label="Dalam Proses" value={k?.inProgress ?? 0} icon={Activity} accent="accent" hint={`${k?.pendingReview ?? 0} menunggu semakan`} onClick={() => setView("tasks")} />
-        <KpiCard label="Skor Prestasi" value={k?.overallScore ?? 0} icon={TrendingUp} accent={gradeAccent(k?.grade || "C")} hint={`Gred ${k?.grade}`} onClick={() => setView("performance")} />
+        <KpiCard index={1} label="Tugasan Hari Ini" value={k?.today ?? 0} icon={Target} accent="primary" hint="perlu siap hari ini" />
+        <KpiCard index={2} label="Tertunggak" value={k?.overdue ?? 0} icon={Clock} accent={k?.overdue ? "danger" : "neutral"} hint="tugasan lewat" onClick={() => setView("tasks")} />
+        <KpiCard index={3} label="Dalam Proses" value={k?.inProgress ?? 0} icon={Activity} accent="accent" hint={`${k?.pendingReview ?? 0} menunggu semakan`} onClick={() => setView("tasks")} />
+        <KpiCard index={4} label="Skor Prestasi" value={k?.overallScore ?? 0} icon={TrendingUp} accent={gradeAccent(k?.grade || "C")} hint={`Gred ${k?.grade}`} onClick={() => setView("performance")} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
         {/* Score panel */}
-        <Card className="p-4 lg:p-5">
-          <SectionHeader title="Skor Prestasi Saya" subtitle={`Tempoh: ${score?.period?.label || "Bulan Ini"}`} icon={TrendingUp} />
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
+          <SectionHeader index={1} eyebrow="Prestasi Saya" title="Skor Prestasi Saya" subtitle={`Tempoh: ${score?.period?.label || "Bulan Ini"}`} icon={TrendingUp} />
           {score && (
             <div className="flex flex-col items-center text-center">
               <ScoreRing score={score.overall} grade={score.grade} showGrade size={120} thickness={10} />
-              <div className={cn("mt-3 px-3 py-1 rounded-full text-xs font-medium", GRADE_META[score.grade].bg, GRADE_META[score.grade].text)}>
+              <div className={cn("mt-3 px-3 py-1 rounded-sm text-xs font-medium border", GRADE_META[score.grade].bg, GRADE_META[score.grade].text, GRADE_META[score.grade].border)}>
                 {score.grade} — {score.gradeLabel}
               </div>
               <p className="text-xs text-muted-foreground mt-2 max-w-[240px]">
@@ -93,24 +91,26 @@ export function StaffDashboard() {
             {score?.dimensions.map((d) => (
               <div key={d.key} className="flex items-center gap-2">
                 <div className="text-xs text-muted-foreground w-28 truncate">{d.name}</div>
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="flex-1 h-1.5 bg-muted overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${d.score}%` }}
                     transition={{ duration: 0.5 }}
-                    className={cn("h-full rounded-full", d.score >= 75 ? "bg-status-success" : d.score >= 60 ? "bg-status-warning" : "bg-status-danger")}
+                    className={cn("h-full", d.score >= 75 ? "bg-status-success" : d.score >= 60 ? "bg-status-warning" : "bg-status-danger")}
                   />
                 </div>
                 <div className="text-xs font-semibold tabular-nums w-7 text-right">{d.score}</div>
-                <div className="text-[9px] text-muted-foreground w-7 text-right">{d.weight}%</div>
+                <div className="text-[9px] text-muted-foreground w-7 text-right tabular-nums">{d.weight}%</div>
               </div>
             ))}
           </div>
         </Card>
 
         {/* Today tasks + overdue */}
-        <Card className="xl:col-span-2 p-4 lg:p-5">
+        <Card className="xl:col-span-2 p-4 lg:p-5 card-flat rounded-md">
           <SectionHeader
+            index={2}
+            eyebrow="Tindakan Segera"
             title="Tugasan Hari Ini & Tertunggak"
             icon={ListTodo}
             action={<Button size="sm" variant="ghost" onClick={() => setView("tasks")} className="h-7 text-xs">Lihat semua <ChevronRight className="w-3 h-3" /></Button>}
@@ -124,7 +124,7 @@ export function StaffDashboard() {
                   <button key={t.id} onClick={() => { setSelectedTaskId(t.id); setView("tasks"); }} className="w-full text-left p-3 rounded-md border border-status-danger/30 bg-status-danger/5 hover:bg-status-danger/10 transition-colors group">
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="w-3.5 h-3.5 text-status-danger" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-status-danger">Lewat {Math.abs(daysUntilShort(t.dueDate))} hari</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-status-danger tabular-nums">Lewat {Math.abs(daysUntilShort(t.dueDate))} hari</span>
                       <StatusBadge status={t.priority} type="priority" />
                     </div>
                     <div className="text-sm font-medium truncate group-hover:text-accent">{t.title}</div>
@@ -140,10 +140,10 @@ export function StaffDashboard() {
                     </div>
                     <div className="text-sm font-medium truncate group-hover:text-accent">{t.title}</div>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                      <div className="flex-1 h-1 bg-muted overflow-hidden">
                         <div className="h-full bg-accent" style={{ width: `${t.progress}%` }} />
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{t.progress}%</span>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">{t.progress}%</span>
                     </div>
                   </button>
                 ))}
@@ -155,8 +155,10 @@ export function StaffDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
         {/* Initiatives */}
-        <Card className="p-4 lg:p-5">
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
           <SectionHeader
+            index={3}
+            eyebrow="Sumbangan Tambahan"
             title="Inisiatif Terkini"
             subtitle="Sumbangan di luar tugasan rasmi"
             icon={Lightbulb}
@@ -167,18 +169,18 @@ export function StaffDashboard() {
               <EmptyState icon={Lightbulb} title="Tiada inisiatif lagi" description="Hantar inisiatif anda untuk diiktiraf." action={<Button size="sm" onClick={() => setView("initiatives")}><Send className="w-3.5 h-3.5 mr-1.5" />Hantar Inisiatif</Button>} />
             ) : (
               data?.initiatives.map((i) => (
-                <div key={i.id} className="p-3 rounded-md border border-border/60">
+                <div key={i.id} className="p-3 rounded-md border border-border">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{i.title}</div>
                       <div className="text-[10px] text-muted-foreground mt-0.5">{relativeTime(i.submittedAt)}</div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded", i.status === "Disahkan" ? "bg-status-success/15 text-status-success" : i.status === "Ditolak" ? "bg-status-danger/15 text-status-danger" : "bg-status-warning/15 text-status-warning")}>
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded-sm border", i.status === "Disahkan" ? "bg-status-success/15 text-status-success border-status-success/30" : i.status === "Ditolak" ? "bg-status-danger/15 text-status-danger border-status-danger/30" : "bg-status-warning/15 text-status-warning border-status-warning/30")}>
                         {i.status}
                       </span>
                       {i.status === "Disahkan" && (
-                        <span className="text-xs font-semibold text-accent">+{i.points}p</span>
+                        <span className="text-xs font-semibold text-accent tabular-nums">+{i.points}p</span>
                       )}
                     </div>
                   </div>
@@ -189,21 +191,21 @@ export function StaffDashboard() {
         </Card>
 
         {/* GM feedback */}
-        <Card className="p-4 lg:p-5">
-          <SectionHeader title="Maklum Balas GM" subtitle="Komen terkini daripada GM" icon={MessageSquare} />
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
+          <SectionHeader index={4} eyebrow="Maklum Balas" title="Maklum Balas GM" subtitle="Komen terkini daripada GM" icon={MessageSquare} />
           <div className="space-y-2">
             {data?.recentFeedback.length === 0 ? (
               <EmptyState icon={MessageSquare} title="Tiada maklum balas" description="Maklum balas GM akan dipaparkan di sini." />
             ) : (
               data?.recentFeedback.map((f, i) => (
-                <div key={i} className="p-3 rounded-md border border-border/60">
+                <div key={i} className="p-3 rounded-md border border-border">
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[9px] text-primary-foreground font-semibold">GM</div>
+                    <div className="w-6 h-6 rounded-sm bg-primary flex items-center justify-center text-[9px] text-primary-foreground font-semibold">GM</div>
                     <div className="text-xs font-medium">{f.authorName}</div>
                     <span className="text-[10px] text-muted-foreground">· {relativeTime(f.createdAt)}</span>
                   </div>
                   <div className="text-xs text-muted-foreground truncate mb-1">{f.title}</div>
-                  <div className="text-sm bg-muted/40 rounded p-2">{f.comment}</div>
+                  <div className="text-sm bg-muted/40 rounded-sm p-2">{f.comment}</div>
                 </div>
               ))
             )}

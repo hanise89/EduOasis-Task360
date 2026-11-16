@@ -1,0 +1,517 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useQuery, useQueryClient } from "@tanstack/react-query";
+     4→     4→import { apiGet, apiPost, apiPatch } from "@/lib/api";
+     5→     5→import { useAppStore } from "@/lib/store";
+     6→     6→import {
+     7→     7→  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+     8→     8→} from "@/components/ui/sheet";
+     9→     9→import { Button } from "@/components/ui/button";
+    10→    10→import { Input } from "@/components/ui/input";
+    11→    11→import { Textarea } from "@/components/ui/textarea";
+    12→    12→import { Label } from "@/components/ui/label";
+    13→    13→import { Slider } from "@/components/ui/slider";
+    14→    14→import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+    15→    15→import { Skeleton } from "@/components/ui/skeleton";
+    16→    16→import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    17→    17→import { cn } from "@/lib/utils";
+    18→    18→import { initials, formatDate, formatDateTime, relativeTime, TASK_STATUS_META, PRIORITY_META, CATEGORY_META, GRADE_META } from "@/lib/meta";
+    19→    19→import type { Task } from "@/types";
+    20→    20→import * as Icons from "lucide-react";
+    21→    21→import { toast } from "sonner";
+    22→    22→import {
+    23→    23→  Clock, Paperclip, AlertTriangle, Send, History, MessageSquare, FileText,
+    24→    24→  CheckCircle2, RotateCcw, Plus, Link as LinkIcon, Star, Calendar, User as UserIcon,
+    25→    25→  TrendingUp, Hourglass, ShieldAlert,
+    26→    26→} from "lucide-react";
+    27→    27→import { useState } from "react";
+    28→    28→import {
+    29→    29→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+    30→    30→} from "@/components/ui/dialog";
+    31→    31→
+    32→    32→export function TaskDetail({ taskId, onClose, onEdit, onRefresh }: { taskId: string; onClose: () => void; onEdit: () => void; onRefresh: () => void }) {
+    33→    33→  const user = useAppStore((s) => s.user)!;
+    34→    34→  const qc = useQueryClient();
+    35→    35→  const [comment, setComment] = useState("");
+    36→    36→  const [progress, setProgress] = useState<number | null>(null);
+    37→    37→  const [blockerOpen, setBlockerOpen] = useState(false);
+    38→    38→  const [logOpen, setLogOpen] = useState(false);
+    39→    39→  const [reviewOpen, setReviewOpen] = useState(false);
+    40→    40→  const [extOpen, setExtOpen] = useState(false);
+    41→    41→
+    42→    42→  const { data, isLoading } = useQuery({
+    43→    43→    queryKey: ["task", taskId],
+    44→    44→    queryFn: () => apiGet<{ task: Task }>(`/api/tasks/${taskId}`),
+    45→    45→  });
+    46→    46→
+    47→    47→  const task = data?.task;
+    48→    48→
+    49→    49→  async function updateStatus(status: string) {
+    50→    50→    try {
+    51→    51→      await apiPatch(`/api/tasks/${taskId}/status`, { status });
+    52→    52→      qc.invalidateQueries({ queryKey: ["task", taskId] });
+    53→    53→      qc.invalidateQueries({ queryKey: ["tasks"] });
+    54→    54→      qc.invalidateQueries({ queryKey: ["gm-dashboard"] });
+    55→    55→      qc.invalidateQueries({ queryKey: ["staff-dashboard"] });
+    56→    56→      toast.success(`Status dikemas kini: ${status}`);
+    57→    57→      onRefresh();
+    58→    58→    } catch (e: any) {
+    59→    59→      toast.error(e.message);
+    60→    60→    }
+    61→    61→  }
+    62→    62→
+    63→    63→  async function updateProgress() {
+    64→    64→    if (progress === null) return;
+    65→    65→    try {
+    66→    66→      await apiPatch(`/api/tasks/${taskId}/status`, { progress });
+    67→    67→      qc.invalidateQueries({ queryKey: ["task", taskId] });
+    68→    68→      qc.invalidateQueries({ queryKey: ["tasks"] });
+    69→    69→      toast.success(`Kemajuan dikemas kini: ${progress}%`);
+    70→    70→      setProgress(null);
+    71→    71→    } catch (e: any) {
+    72→    72→      toast.error(e.message);
+    73→    73→    }
+    74→    74→  }
+    75→    75→
+    76→    76→  async function sendComment() {
+    77→    77→    if (!comment.trim()) return;
+    78→    78→    try {
+    79→    79→      await apiPost(`/api/tasks/${taskId}/comments`, { body: comment });
+    80→    80→      setComment("");
+    81→    81→      qc.invalidateQueries({ queryKey: ["task", taskId] });
+    82→    82→      toast.success("Komen dihantar.");
+    83→    83→    } catch (e: any) {
+    84→    84→      toast.error(e.message);
+    85→    85→    }
+    86→    86→  }
+    87→    87→
+    88→    88→  return (
+    89→    89→    <Sheet open onOpenChange={(o) => !o && onClose()}>
+    90→    90→      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 overflow-y-auto scroll-slim">
+    91→    91→        {isLoading || !task ? (
+    92→    92→          <div className="p-6 space-y-3">
+    93→    93→            <Skeleton className="h-8 w-3/4" />
+    94→    94→            <Skeleton className="h-4 w-1/2" />
+    95→    95→            <Skeleton className="h-32 w-full" />
+    96→    96→          </div>
+    97→    97→        ) : (
+    98→    98→          <>
+    99→    99→            <SheetHeader className="px-5 pt-5 pb-3 border-b border-border">
+   100→   100→              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+   101→   101→                <span>{task.category}</span>
+   102→   102→                <span>·</span>
+   103→   103→                <span className={cn("font-medium", PRIORITY_META[task.priority as string]?.text)}>{task.priority}</span>
+   104→   104→                {task.complexity > 1 && <><span>·</span><span>Kerumitan {task.complexity}/3</span></>}
+   105→   105→              </div>
+   106→   106→              <SheetTitle className="text-lg leading-snug">{task.title}</SheetTitle>
+   107→   107→              <SheetDescription className="text-sm leading-relaxed mt-1">{task.description}</SheetDescription>
+   108→   108→              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+   109→   109→                <div className="flex items-center gap-1.5">
+   110→   110→                  {task.assignee && (
+   111→   111→                    <Avatar className="w-5 h-5">
+   112→   112→                      <AvatarFallback style={{ backgroundColor: task.assignee.avatarColor }} className="text-white text-[8px] font-semibold">{initials(task.assignee.name)}</AvatarFallback>
+   113→   113→                    </Avatar>
+   114→   114→                  )}
+   115→   115→                  <span className="font-medium">{task.assignee?.name || "—"}</span>
+   116→   116→                </div>
+   117→   117→                <div className="flex items-center gap-1 text-muted-foreground">
+   118→   118→                  <Calendar className="w-3 h-3" />
+   119→   119→                  <span className={cn(daysUntil(task.extendedDueDate || task.dueDate) < 0 && task.status !== "Selesai" ? "text-status-danger font-medium" : "")}>
+   120→   120→                    {formatDate(task.extendedDueDate || task.dueDate)}
+   121→   121→                    {task.extendedDueDate && <span className="ml-1 text-[9px] text-accent">(dilanjutkan)</span>}
+   122→   122→                  </span>
+   123→   123→                </div>
+   124→   124→                <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-medium", TASK_STATUS_META[task.status as string]?.bg, TASK_STATUS_META[task.status as string]?.text)}>
+   125→   125→                  <span className={cn("w-1.5 h-1.5 rounded-full", TASK_STATUS_META[task.status as string]?.dot)} />
+   126→   126→                  {task.status}
+   127→   127→                </span>
+   128→   128→              </div>
+   129→   129→              {task.links && task.links.length > 0 && (
+   130→   130→                <div className="flex flex-wrap gap-2 mt-2">
+   131→   131→                  {task.links.map((l, i) => (
+   132→   132→                    <a key={i} href={l} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline px-2 py-0.5 rounded bg-accent/5">
+   133→   133→                      <LinkIcon className="w-3 h-3" /> Lampiran {i + 1}
+   134→   134→                    </a>
+   135→   135→                  ))}
+   136→   136→                </div>
+   137→   137→              )}
+   138→   138→            </SheetHeader>
+   139→   139→
+   140→   140→            {/* Action buttons */}
+   141→   141→            <div className="px-5 py-3 border-b border-border flex flex-wrap gap-2">
+   142→   142→              {user.role === "STAF" && task.assigneeId === user.id && (
+   143→   143→                <>
+   144→   144→                  {task.status === "Belum Mula" && (
+   145→   145→                    <Button size="sm" onClick={() => updateStatus("Dalam Proses")}><TrendingUp className="w-3.5 h-3.5 mr-1" /> Mula</Button>
+   146→   146→                  )}
+   147→   147→                  {task.status === "Dalam Proses" && (
+   148→   148→                    <Button size="sm" onClick={() => updateStatus("Menunggu Semakan")}><Send className="w-3.5 h-3.5 mr-1" /> Hantar untuk Semakan</Button>
+   149→   149→                  )}
+   150→   150→                  {task.status === "Disekat" && (
+   151→   151→                    <Button size="sm" variant="outline" onClick={() => updateStatus("Dalam Proses")}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Sambung Semula</Button>
+   152→   152→                  )}
+   153→   153→                  <Button size="sm" variant="outline" onClick={() => setBlockerOpen(true)}><ShieldAlert className="w-3.5 h-3.5 mr-1" /> Laporkan Halangan</Button>
+   154→   154→                  <Button size="sm" variant="outline" onClick={() => setExtOpen(true)}><Hourglass className="w-3.5 h-3.5 mr-1" /> Mohon Lanjutan</Button>
+   155→   155→                </>
+   156→   156→              )}
+   157→   157→              {user.role === "GM" && task.status === "Menunggu Semakan" && (
+   158→   158→                <>
+   159→   159→                  <Button size="sm" onClick={() => setReviewOpen(true)}><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Lulus &amp; Nilai</Button>
+   160→   160→                  <Button size="sm" variant="outline" onClick={() => updateStatus("Dalam Proses")}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Pulangkan untuk Semakan Semula</Button>
+   161→   161→                </>
+   162→   162→              )}
+   163→   163→              <Button size="sm" variant="ghost" onClick={() => setLogOpen(true)}><Clock className="w-3.5 h-3.5 mr-1" /> Log Masa</Button>
+   164→   164→              <Button size="sm" variant="ghost" onClick={onEdit}><FileText className="w-3.5 h-3.5 mr-1" /> Edit</Button>
+   165→   165→            </div>
+   166→   166→
+   167→   167→            {/* Progress */}
+   168→   168→            {task.status !== "Selesai" && task.status !== "Dibatalkan" && (
+   169→   169→              <div className="px-5 py-3 border-b border-border">
+   170→   170→                <div className="flex items-center justify-between mb-2">
+   171→   171→                  <Label className="text-xs font-medium text-muted-foreground">Kemajuan Tugasan</Label>
+   172→   172→                  <span className="text-xs font-semibold tabular-nums">{progress ?? task.progress}%</span>
+   173→   173→                </div>
+   174→   174→                <Slider
+   175→   175→                  value={[progress ?? task.progress]}
+   176→   176→                  min={0}
+   177→   177→                  max={100}
+   178→   178→                  step={5}
+   179→   179→                  onValueChange={([v]) => setProgress(v)}
+   180→   180→                  onValueCommit={() => updateProgress()}
+   181→   181→                />
+   182→   182→              </div>
+   183→   183→            )}
+   184→   184→
+   185→   185→            <Tabs defaultValue="comments" className="px-5 py-4">
+   186→   186→              <TabsList className="grid w-full grid-cols-4">
+   187→   187→                <TabsTrigger value="comments" className="text-xs"><MessageSquare className="w-3.5 h-3.5 mr-1" /> Komen</TabsTrigger>
+   188→   188→                <TabsTrigger value="blockers" className="text-xs"><AlertTriangle className="w-3.5 h-3.5 mr-1" /> Halangan</TabsTrigger>
+   189→   189→                <TabsTrigger value="logs" className="text-xs"><Clock className="w-3.5 h-3.5 mr-1" /> Log Masa</TabsTrigger>
+   190→   190→                <TabsTrigger value="history" className="text-xs"><History className="w-3.5 h-3.5 mr-1" /> Sejarah</TabsTrigger>
+   191→   191→              </TabsList>
+   192→   192→
+   193→   193→              <TabsContent value="comments" className="mt-4 space-y-3">
+   194→   194→                <div className="flex gap-2">
+   195→   195→                  <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tulis komen..." className="text-sm min-h-[60px]" />
+   196→   196→                  <Button size="icon" onClick={sendComment} disabled={!comment.trim()}><Send className="w-4 h-4" /></Button>
+   197→   197→                </div>
+   198→   198→                <div className="space-y-2 max-h-80 overflow-y-auto scroll-slim">
+   199→   199→                  {task.comments?.length === 0 ? (
+   200→   200→                    <div className="text-xs text-muted-foreground text-center py-6">Tiada komen. Mulakan perbualan.</div>
+   201→   201→                  ) : (
+   202→   202→                    task.comments?.map((c) => (
+   203→   203→                      <div key={c.id} className={cn("flex gap-2", c.isFromGM && "flex-row-reverse")}>
+   204→   204→                        <Avatar className="w-6 h-6 shrink-0">
+   205→   205→                          <AvatarFallback style={{ backgroundColor: c.author?.avatarColor || (c.isFromGM ? "#1F3A5F" : "#0E7C86") }} className="text-white text-[9px] font-semibold">
+   206→   206→                            {c.author ? initials(c.author.name) : "?"}
+   207→   207→                          </AvatarFallback>
+   208→   208→                        </Avatar>
+   209→   209→                        <div className={cn("max-w-[75%]", c.isFromGM && "text-right")}>
+   210→   210→                          <div className="text-[10px] text-muted-foreground mb-0.5">
+   211→   211→                            {c.author?.name} · {relativeTime(c.createdAt)}
+   212→   212→                            {c.isFromGM && <span className="ml-1 px-1 rounded bg-primary/10 text-primary font-medium">GM</span>}
+   213→   213→                          </div>
+   214→   214→                          <div className={cn("text-sm rounded-lg px-3 py-2 inline-block text-left", c.isFromGM ? "bg-primary/10" : "bg-muted")}>{c.body}</div>
+   215→   215→                        </div>
+   216→   216→                      </div>
+   217→   217→                    ))
+   218→   218→                  )}
+   219→   219→                </div>
+   220→   220→              </TabsContent>
+   221→   221→
+   222→   222→              <TabsContent value="blockers" className="mt-4 space-y-2">
+   223→   223→                {task.blockers?.filter((b) => b.status === "Terbuka").length === 0 && task.blockers?.filter((b) => b.status === "Selesai").length === 0 ? (
+   224→   224→                  <div className="text-xs text-muted-foreground text-center py-6">Tiada halangan dilaporkan.</div>
+   225→   225→                ) : (
+   226→   226→                  <>
+   227→   227→                    {task.blockers?.filter((b) => b.status === "Terbuka").map((b) => (
+   228→   228→                      <div key={b.id} className="p-3 rounded-md border border-status-danger/30 bg-status-danger/5">
+   229→   229→                        <div className="flex items-center justify-between mb-1">
+   230→   230→                          <span className="text-xs font-semibold text-status-danger uppercase tracking-wide">{b.type}</span>
+   231→   231→                          <span className="text-[10px] text-muted-foreground">{relativeTime(b.reportedAt)}</span>
+   232→   232→                        </div>
+   233→   233→                        <div className="text-sm font-medium">{b.description}</div>
+   234→   234→                        {b.helpNeeded && <div className="text-xs text-muted-foreground mt-1">Bantuan diperlukan: {b.helpNeeded}</div>}
+   235→   235→                        <Button size="sm" variant="ghost" className="mt-2 h-7 text-xs" onClick={async () => { await apiPatch(`/api/blockers/${b.id}/resolve`, {}); qc.invalidateQueries({ queryKey: ["task", taskId] }); toast.success("Halangan ditanda selesai."); }}>
+   236→   236→                          <CheckCircle2 className="w-3 h-3 mr-1" /> Tanda Selesai
+   237→   237→                        </Button>
+   238→   238→                      </div>
+   239→   239→                    ))}
+   240→   240→                    {task.blockers?.filter((b) => b.status === "Selesai").map((b) => (
+   241→   241→                      <div key={b.id} className="p-3 rounded-md border border-border bg-muted/30 opacity-70">
+   242→   242→                        <div className="flex items-center gap-2">
+   243→   243→                          <CheckCircle2 className="w-3.5 h-3.5 text-status-success" />
+   244→   244→                          <span className="text-xs font-medium">{b.type}</span>
+   245→   245→                          <span className="text-[10px] text-muted-foreground">Selesai</span>
+   246→   246→                        </div>
+   247→   247→                        <div className="text-sm mt-1">{b.description}</div>
+   248→   248→                      </div>
+   249→   249→                    ))}
+   250→   250→                  </>
+   251→   251→                )}
+   252→   252→              </TabsContent>
+   253→   253→
+   254→   254→              <TabsContent value="logs" className="mt-4 space-y-2">
+   255→   255→                {task.timeLogs?.length === 0 ? (
+   256→   256→                  <div className="text-xs text-muted-foreground text-center py-6">Tiada log masa direkod.</div>
+   257→   257→                ) : (
+   258→   258→                  <div className="space-y-1.5">
+   259→   259→                    {task.timeLogs?.map((l) => (
+   260→   260→                      <div key={l.id} className="flex items-center justify-between p-2 rounded-md bg-muted/30 text-xs">
+   261→   261→                        <div>
+   262→   262→                          <div className="font-medium">{l.hours} jam</div>
+   263→   263→                          {l.note && <div className="text-muted-foreground">{l.note}</div>}
+   264→   264→                        </div>
+   265→   265→                        <div className="text-muted-foreground">{formatDate(l.date)}</div>
+   266→   266→                      </div>
+   267→   267→                    ))}
+   268→   268→                    <div className="flex items-center justify-between p-2 rounded-md bg-accent/5 border border-accent/20 text-xs font-medium">
+   269→   269→                      <span>Jumlah</span>
+   270→   270→                      <span className="tabular-nums">{task.timeLogs?.reduce((s, l) => s + l.hours, 0).toFixed(1)} jam / {task.estimatedHours} jam anggaran</span>
+   271→   271→                    </div>
+   272→   272→                  </div>
+   273→   273→                )}
+   274→   274→              </TabsContent>
+   275→   275→
+   276→   276→              <TabsContent value="history" className="mt-4 space-y-1.5">
+   277→   277→                {task.history?.length === 0 ? (
+   278→   278→                  <div className="text-xs text-muted-foreground text-center py-6">Tiada sejarah perubahan.</div>
+   279→   279→                ) : (
+   280→   280→                  task.history?.map((h) => (
+   281→   281→                    <div key={h.id} className="flex items-start gap-2 text-xs">
+   282→   282→                      <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
+   283→   283→                      <div className="flex-1">
+   284→   284→                        <div className="font-medium">{h.note}</div>
+   285→   285→                        {h.oldValue && h.newValue && <div className="text-muted-foreground">{h.oldValue} → {h.newValue}</div>}
+   286→   286→                        <div className="text-[10px] text-muted-foreground">{formatDateTime(h.createdAt)}</div>
+   287→   287→                      </div>
+   288→   288→                    </div>
+   289→   289→                  ))
+   290→   290→                )}
+   291→   291→              </TabsContent>
+   292→   292→            </Tabs>
+   293→   293→
+   294→   294→            {/* Quality review display if exists */}
+   295→   295→            {task.qualityReviews && task.qualityReviews.length > 0 && (
+   296→   296→              <div className="px-5 pb-6">
+   297→   297→                <div className="p-3 rounded-md bg-status-success/5 border border-status-success/20">
+   298→   298→                  <div className="flex items-center gap-2 mb-2">
+   299→   299→                    <Star className="w-4 h-4 text-status-warning fill-status-warning" />
+   300→   300→                    <span className="text-sm font-semibold">Penilaian Kualiti GM</span>
+   301→   301→                  </div>
+   302→   302→                  <div className="grid grid-cols-4 gap-2 text-center">
+   303→   303→                    {[
+   304→   304→                      { label: "Ketepatan", v: task.qualityReviews[0].accuracy },
+   305→   305→                      { label: "Kelengkapan", v: task.qualityReviews[0].completeness },
+   306→   306→                      { label: "Profesionalisme", v: task.qualityReviews[0].professionalism },
+   307→   307→                      { label: "Spesifikasi", v: task.qualityReviews[0].specCompliance },
+   308→   308→                    ].map((r) => (
+   309→   309→                      <div key={r.label}>
+   310→   310→                        <div className="text-lg font-bold tabular-nums">{r.v}</div>
+   311→   311→                        <div className="text-[9px] text-muted-foreground uppercase tracking-wide">{r.label}</div>
+   312→   312→                      </div>
+   313→   313→                    ))}
+   314→   314→                  </div>
+   315→   315→                  {task.qualityReviews[0].comment && (
+   316→   316→                    <div className="text-xs text-muted-foreground mt-2 italic">"{task.qualityReviews[0].comment}"</div>
+   317→   317→                  )}
+   318→   318→                </div>
+   319→   319→              </div>
+   320→   320→            )}
+   321→   321→
+   322→   322→            {/* Extension requests */}
+   323→   323→            {task.extensionRequests && task.extensionRequests.length > 0 && (
+   324→   324→              <div className="px-5 pb-6 space-y-2">
+   325→   325→                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Permintaan Lanjutan Tarikh</div>
+   326→   326→                {task.extensionRequests.map((e) => (
+   327→   327→                  <div key={e.id} className={cn("p-2.5 rounded-md border text-xs", e.status === "Diluluskan" ? "border-status-success/30 bg-status-success/5" : e.status === "Ditolak" ? "border-status-danger/30 bg-status-danger/5" : "border-status-warning/30 bg-status-warning/5")}>
+   328→   328→                    <div className="flex items-center justify-between">
+   329→   329→                      <span className="font-medium">Lanjutan ke {formatDate(e.requestedDate)}</span>
+   330→   330→                      <span className={cn("px-1.5 py-0.5 rounded font-medium", e.status === "Diluluskan" ? "bg-status-success/15 text-status-success" : e.status === "Ditolak" ? "bg-status-danger/15 text-status-danger" : "bg-status-warning/15 text-status-warning")}>{e.status}</span>
+   331→   331→                    </div>
+   332→   332→                    <div className="text-muted-foreground mt-1">{e.reason}</div>
+   333→   333→                    {user.role === "GM" && e.status === "Menunggu" && (
+   334→   334→                      <div className="flex gap-1 mt-2">
+   335→   335→                        <Button size="sm" className="h-6 text-[10px]" onClick={async () => { await apiPatch(`/api/tasks/${taskId}/extension`, { extensionId: e.id, status: "Diluluskan" }); qc.invalidateQueries({ queryKey: ["task", taskId] }); toast.success("Lanjutan diluluskan."); }}>Lulus</Button>
+   336→   336→                        <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={async () => { await apiPatch(`/api/tasks/${taskId}/extension`, { extensionId: e.id, status: "Ditolak" }); qc.invalidateQueries({ queryKey: ["task", taskId] }); toast.success("Lanjutan ditolak."); }}>Tolak</Button>
+   337→   337→                      </div>
+   338→   338→                    )}
+   339→   339→                  </div>
+   340→   340→                ))}
+   341→   341→              </div>
+   342→   342→            )}
+   343→   343→          </>
+   344→   344→        )}
+   345→   345→      </SheetContent>
+   346→   346→
+   347→   347→      {task && (
+   348→   348→        <>
+   349→   349→          <BlockerDialog open={blockerOpen} onOpenChange={setBlockerOpen} taskId={taskId} onSaved={() => qc.invalidateQueries({ queryKey: ["task", taskId] })} />
+   350→   350→          <TimeLogDialog open={logOpen} onOpenChange={setLogOpen} taskId={taskId} onSaved={() => qc.invalidateQueries({ queryKey: ["task", taskId] })} />
+   351→   351→          {user.role === "GM" && (
+   352→   352→            <QualityReviewDialog open={reviewOpen} onOpenChange={setReviewOpen} taskId={taskId} onSaved={() => { qc.invalidateQueries({ queryKey: ["task", taskId] }); qc.invalidateQueries({ queryKey: ["tasks"] }); }} />
+   353→   353→          )}
+   354→   354→          <ExtensionDialog open={extOpen} onOpenChange={setExtOpen} taskId={taskId} onSaved={() => qc.invalidateQueries({ queryKey: ["task", taskId] })} />
+   355→   355→        </>
+   356→   356→      )}
+   357→   357→    </Sheet>
+   358→   358→  );
+   359→   359→}
+   360→   360→
+   361→   361→function daysUntil(dateStr: string) {
+   362→   362→  const due = new Date(dateStr);
+   363→   363→  const now = new Date();
+   364→   364→  now.setHours(0, 0, 0, 0);
+   365→   365→  due.setHours(0, 0, 0, 0);
+   366→   366→  return Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+   367→   367→}
+   368→   368→
+   369→   369→function BlockerDialog({ open, onOpenChange, taskId, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; taskId: string; onSaved: () => void }) {
+   370→   370→  const [type, setType] = useState("Teknikal");
+   371→   371→  const [description, setDescription] = useState("");
+   372→   372→  const [helpNeeded, setHelpNeeded] = useState("");
+   373→   373→  return (
+   374→   374→    <Dialog open={open} onOpenChange={onOpenChange}>
+   375→   375→      <DialogContent>
+   376→   376→        <DialogHeader>
+   377→   377→          <DialogTitle>Laporkan Halangan</DialogTitle>
+   378→   378→        </DialogHeader>
+   379→   379→        <div className="space-y-3 py-2">
+   380→   380→          <div className="space-y-1.5">
+   381→   381→            <Label className="text-xs">Jenis Halangan</Label>
+   382→   382→            <select value={type} onChange={(e) => setType(e.target.value)} className="h-9 px-2 text-sm rounded border border-input bg-background w-full">
+   383→   383→              {["Maklumat", "Sumber", "Klien", "Teknikal", "Lain"].map((t) => <option key={t} value={t}>{t}</option>)}
+   384→   384→            </select>
+   385→   385→          </div>
+   386→   386→          <div className="space-y-1.5">
+   387→   387→            <Label className="text-xs">Penerangan Halangan</Label>
+   388→   388→            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Apakah halangan yang dihadapi?" />
+   389→   389→          </div>
+   390→   390→          <div className="space-y-1.5">
+   391→   391→            <Label className="text-xs">Bantuan Diperlukan</Label>
+   392→   392→            <Input value={helpNeeded} onChange={(e) => setHelpNeeded(e.target.value)} placeholder="Apakah bantuan yang diperlukan?" />
+   393→   393→          </div>
+   394→   394→        </div>
+   395→   395→        <DialogFooter>
+   396→   396→          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+   397→   397→          <Button onClick={async () => {
+   398→   398→            await apiPost(`/api/tasks/${taskId}/blockers`, { type, description, helpNeeded });
+   399→   399→            onSaved(); onOpenChange(false); setDescription(""); setHelpNeeded("");
+   400→   400→            toast.success("Halangan dilaporkan.");
+   401→   401→          }}>Laporkan</Button>
+   402→   402→        </DialogFooter>
+   403→   403→      </DialogContent>
+   404→   404→    </Dialog>
+   405→   405→  );
+   406→   406→}
+   407→   407→
+   408→   408→function TimeLogDialog({ open, onOpenChange, taskId, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; taskId: string; onSaved: () => void }) {
+   409→   409→  const [hours, setHours] = useState("");
+   410→   410→  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+   411→   411→  const [note, setNote] = useState("");
+   412→   412→  return (
+   413→   413→    <Dialog open={open} onOpenChange={onOpenChange}>
+   414→   414→      <DialogContent>
+   415→   415→        <DialogHeader><DialogTitle>Log Masa Kerja</DialogTitle></DialogHeader>
+   416→   416→        <div className="space-y-3 py-2">
+   417→   417→          <div className="grid grid-cols-2 gap-3">
+   418→   418→            <div className="space-y-1.5">
+   419→   419→              <Label className="text-xs">Jam</Label>
+   420→   420→              <Input type="number" step="0.5" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="2.5" />
+   421→   421→            </div>
+   422→   422→            <div className="space-y-1.5">
+   423→   423→              <Label className="text-xs">Tarikh</Label>
+   424→   424→              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+   425→   425→            </div>
+   426→   426→          </div>
+   427→   427→          <div className="space-y-1.5">
+   428→   428→            <Label className="text-xs">Nota</Label>
+   429→   429→            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Catatan ringkas (pilihan)" />
+   430→   430→          </div>
+   431→   431→        </div>
+   432→   432→        <DialogFooter>
+   433→   433→          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+   434→   434→          <Button onClick={async () => {
+   435→   435→            await apiPost(`/api/tasks/${taskId}/time-logs`, { hours: Number(hours), date, note });
+   436→   436→            onSaved(); onOpenChange(false); setHours(""); setNote("");
+   437→   437→            toast.success("Masa direkod.");
+   438→   438→          }}>Simpan</Button>
+   439→   439→        </DialogFooter>
+   440→   440→      </DialogContent>
+   441→   441→    </Dialog>
+   442→   442→  );
+   443→   443→}
+   444→   444→
+   445→   445→function QualityReviewDialog({ open, onOpenChange, taskId, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; taskId: string; onSaved: () => void }) {
+   446→   446→  const [ratings, setRatings] = useState({ accuracy: 4, completeness: 4, professionalism: 4, specCompliance: 4 });
+   447→   447→  const [comment, setComment] = useState("");
+   448→   448→  return (
+   449→   449→    <Dialog open={open} onOpenChange={onOpenChange}>
+   450→   450→      <DialogContent className="sm:max-w-md">
+   451→   451→        <DialogHeader><DialogTitle>Penilaian Kualiti &amp; Kelulusan</DialogTitle></DialogHeader>
+   452→   452→        <div className="space-y-3 py-2">
+   453→   453→          {[
+   454→   454→            { key: "accuracy", label: "Ketepatan" },
+   455→   455→            { key: "completeness", label: "Kelengkapan" },
+   456→   456→            { key: "professionalism", label: "Profesionalisme" },
+   457→   457→            { key: "specCompliance", label: "Mengikut Spesifikasi" },
+   458→   458→          ].map((r) => (
+   459→   459→            <div key={r.key} className="flex items-center justify-between">
+   460→   460→              <Label className="text-xs">{r.label}</Label>
+   461→   461→              <div className="flex items-center gap-1">
+   462→   462→                {[1, 2, 3, 4, 5].map((v) => (
+   463→   463→                  <button key={v} onClick={() => setRatings({ ...ratings, [r.key]: v })} className={cn("w-7 h-7 rounded text-xs font-medium transition-colors", v <= (ratings as any)[r.key] ? "bg-status-warning text-white" : "bg-muted text-muted-foreground hover:bg-muted/70")}>
+   464→   464→                    {v}
+   465→   465→                  </button>
+   466→   466→                ))}
+   467→   467→              </div>
+   468→   468→            </div>
+   469→   469→          ))}
+   470→   470→          <div className="space-y-1.5">
+   471→   471→            <Label className="text-xs">Komen</Label>
+   472→   472→            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Maklum balas untuk staf..." />
+   473→   473→          </div>
+   474→   474→        </div>
+   475→   475→        <DialogFooter>
+   476→   476→          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+   477→   477→          <Button onClick={async () => {
+   478→   478→            await apiPost(`/api/tasks/${taskId}/review`, { ...ratings, comment });
+   479→   479→            onSaved(); onOpenChange(false); setComment("");
+   480→   480→            toast.success("Tugasan diluluskan &amp; dinilai.");
+   481→   481→          }}><CheckCircle2 className="w-4 h-4 mr-1.5" /> Lulus &amp; Nilai</Button>
+   482→   482→        </DialogFooter>
+   483→   483→      </DialogContent>
+   484→   484→    </Dialog>
+   485→   485→  );
+   486→   486→}
+   487→   487→
+   488→   488→function ExtensionDialog({ open, onOpenChange, taskId, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; taskId: string; onSaved: () => void }) {
+   489→   489→  const [requestedDate, setRequestedDate] = useState("");
+   490→   490→  const [reason, setReason] = useState("");
+   491→   491→  return (
+   492→   492→    <Dialog open={open} onOpenChange={onOpenChange}>
+   493→   493→      <DialogContent>
+   494→   494→        <DialogHeader><DialogTitle>Mohon Lanjutan Tarikh Akhir</DialogTitle></DialogHeader>
+   495→   495→        <div className="space-y-3 py-2">
+   496→   496→          <div className="space-y-1.5">
+   497→   497→            <Label className="text-xs">Tarikh Akhir Baharu</Label>
+   498→   498→            <Input type="date" value={requestedDate} onChange={(e) => setRequestedDate(e.target.value)} />
+   499→   499→          </div>
+   500→   500→          <div className="space-y-1.5">
+   501→   501→            <Label className="text-xs">Sebab Permohonan</Label>
+   502→   502→            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Kenapa lanjutan diperlukan?" />
+   503→   503→          </div>
+   504→   504→        </div>
+   505→   505→        <DialogFooter>
+   506→   506→          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+   507→   507→          <Button onClick={async () => {
+   508→   508→            await apiPost(`/api/tasks/${taskId}/extension`, { requestedDate, reason });
+   509→   509→            onSaved(); onOpenChange(false); setReason("");
+   510→   510→            toast.success("Permintaan lanjutan dihantar kepada GM.");
+   511→   511→          }}>Hantar Permohonan</Button>
+   512→   512→        </DialogFooter>
+   513→   513→      </DialogContent>
+   514→   514→    </Dialog>
+   515→   515→  );
+   516→   516→}
+   517→   517→

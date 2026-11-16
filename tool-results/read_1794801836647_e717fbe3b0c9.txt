@@ -1,0 +1,933 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useMemo, useState } from "react";
+     4→import { useQuery, useQueryClient } from "@tanstack/react-query";
+     5→import { toast } from "sonner";
+     6→
+     7→import { apiGet, apiPut, apiPost } from "@/lib/api";
+     8→import { useAppStore } from "@/lib/store";
+     9→import { cn } from "@/lib/utils";
+    10→import { formatDate, formatDateTime } from "@/lib/meta";
+    11→
+    12→import {
+    13→  SectionHeader,
+    14→  PageContainer,
+    15→  EmptyState,
+    16→} from "@/components/common/ui";
+    17→import { Card } from "@/components/ui/card";
+    18→import { Button } from "@/components/ui/button";
+    19→import { Input } from "@/components/ui/input";
+    20→import { Label } from "@/components/ui/label";
+    21→import { Slider } from "@/components/ui/slider";
+    22→import { Checkbox } from "@/components/ui/checkbox";
+    23→import { Separator } from "@/components/ui/separator";
+    24→import { Badge } from "@/components/ui/badge";
+    25→import {
+    26→  Tabs,
+    27→  TabsList,
+    28→  TabsTrigger,
+    29→  TabsContent,
+    30→} from "@/components/ui/tabs";
+    31→import {
+    32→  AlertDialog,
+    33→  AlertDialogAction,
+    34→  AlertDialogCancel,
+    35→  AlertDialogContent,
+    36→  AlertDialogDescription,
+    37→  AlertDialogFooter,
+    38→  AlertDialogHeader,
+    39→  AlertDialogTitle,
+    40→  AlertDialogTrigger,
+    41→} from "@/components/ui/alert-dialog";
+    42→import {
+    43→  Table,
+    44→  TableHeader,
+    45→  TableBody,
+    46→  TableHead,
+    47→  TableRow,
+    48→  TableCell,
+    49→} from "@/components/ui/table";
+    50→
+    51→import {
+    52→  Settings as SettingsIcon,
+    53→  Scale,
+    54→  Award,
+    55→  Calendar,
+    56→  History,
+    57→  RotateCcw,
+    58→  Save,
+    59→  AlertTriangle,
+    60→  Plus,
+    61→  Trash2,
+    62→  Loader2,
+    63→  CheckCircle2,
+    64→  ShieldAlert,
+    65→} from "lucide-react";
+    66→
+    67→import type { Settings, AuditLog } from "@/types";
+    68→
+    69→// --- constants -------------------------------------------------------------
+    70→
+    71→type WeightKey = keyof Settings["weights"];
+    72→
+    73→const DIMENSIONS: { key: WeightKey; label: string; desc: string }[] = [
+    74→  { key: "taskCompletion", label: "Penyiapan Tugasan", desc: "Kadar tugasan diselesaikan mengikut tempoh" },
+    75→  { key: "timeliness", label: "Ketepatan Masa", desc: "Pematuhan tarikh akhir & sambungan" },
+    76→  { key: "workQuality", label: "Kualiti Kerja", desc: "Skor semakan kualiti GM" },
+    77→  { key: "initiative", label: "Inisiatif & Penyelesaian", desc: "Sumbangan di luar tugasan rasmi" },
+    78→  { key: "communication", label: "Komunikasi & Akauntabiliti", desc: "Respons komen & pelaporan" },
+    79→  { key: "productivity", label: "Produktiviti & Beban", desc: "Penggunaan jam bekerja berkesan" },
+    80→];
+    81→
+    82→const DEFAULT_SETTINGS: Settings = {
+    83→  weights: {
+    84→    taskCompletion: 20,
+    85→    timeliness: 15,
+    86→    workQuality: 25,
+    87→    initiative: 10,
+    88→    communication: 15,
+    89→    productivity: 15,
+    90→  },
+    91→  initiativeTargetMonthly: 20,
+    92→  initiativeTargetQuarterly: 60,
+    93→  gradeBands: {
+    94→    A: { min: 90, max: 100 },
+    95→    B: { min: 75, max: 89 },
+    96→    C: { min: 60, max: 74 },
+    97→    D: { min: 40, max: 59 },
+    98→    E: { min: 0, max: 39 },
+    99→  },
+   100→  workingDays: [1, 2, 3, 4, 5],
+   101→  holidays: [],
+   102→};
+   103→
+   104→const GRADE_LABELS: Record<keyof Settings["gradeBands"], string> = {
+   105→  A: "Cemerlang",
+   106→  B: "Baik",
+   107→  C: "Memuaskan",
+   108→  D: "Perlu Penambahbaikan",
+   109→  E: "Kritikal",
+   110→};
+   111→
+   112→const WEEKDAY_LABELS = [
+   113→  "Ahad",
+   114→  "Isnin",
+   115→  "Selasa",
+   116→  "Rabu",
+   117→  "Khamis",
+   118→  "Jumaat",
+   119→  "Sabtu",
+   120→];
+   121→
+   122→const ACTION_STYLE_RULES: { match: RegExp; text: string; bg: string }[] = [
+   123→  { match: /LOGIN|LOGOUT|AUTH|SESSION/i, text: "text-muted-foreground", bg: "bg-muted" },
+   124→  { match: /CREATE|ADD|SUBMIT|REGISTER|UPLOADED/i, text: "text-status-info", bg: "bg-status-info/10" },
+   125→  { match: /UPDATE|PATCH|EDIT|REVIEW|VERIFY|CHANGE|EXTEND|ASSIGN|REWORK|PROGRESS|TIME_LOG/i, text: "text-accent", bg: "bg-accent/10" },
+   126→  { match: /DELETE|REMOVE|RESET|PURGE|CLEAR/i, text: "text-status-danger", bg: "bg-status-danger/10" },
+   127→  { match: /APPROVE|CONFIRM|COMPLETE|DONE|RESOLVE|CLOSE/i, text: "text-status-success", bg: "bg-status-success/10" },
+   128→  { match: /REJECT|DECLINE|CANCEL|BLOCK|FAIL/i, text: "text-status-warning", bg: "bg-status-warning/15" },
+   129→];
+   130→
+   131→function actionStyle(action: string): { text: string; bg: string } {
+   132→  const found = ACTION_STYLE_RULES.find((r) => r.match.test(action));
+   133→  return found ?? { text: "text-muted-foreground", bg: "bg-muted" };
+   134→}
+   135→
+   136→// --- main view -------------------------------------------------------------
+   137→
+   138→export function SettingsView() {
+   139→  const [tab, setTab] = useState("weights");
+   140→
+   141→  return (
+   142→    <PageContainer>
+   143→      <div className="flex items-end justify-between gap-3 flex-wrap">
+   144→        <div>
+   145→          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+   146→            Pentadbiran Sistem
+   147→          </span>
+   148→          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5 flex items-center gap-2">
+   149→            <SettingsIcon className="w-5 h-5 text-accent" />
+   150→            Tetapan & Konfigurasi
+   151→          </h1>
+   152→          <p className="text-sm text-muted-foreground mt-0.5">
+   153→            Urus pemberat dimensi, sasaran, gred, dan data sistem
+   154→          </p>
+   155→        </div>
+   156→      </div>
+   157→
+   158→      <Tabs value={tab} onValueChange={setTab}>
+   159→        <TabsList className="w-full sm:w-auto overflow-x-auto h-auto sm:h-9">
+   160→          <TabsTrigger value="weights" className="gap-1.5">
+   161→            <Scale className="w-3.5 h-3.5" />
+   162→            Pemberat Dimensi
+   163→          </TabsTrigger>
+   164→          <TabsTrigger value="targets" className="gap-1.5">
+   165→            <Award className="w-3.5 h-3.5" />
+   166→            Sasaran &amp; Gred
+   167→          </TabsTrigger>
+   168→          <TabsTrigger value="audit" className="gap-1.5">
+   169→            <History className="w-3.5 h-3.5" />
+   170→            Log Audit &amp; Set Semula
+   171→          </TabsTrigger>
+   172→        </TabsList>
+   173→
+   174→        <TabsContent value="weights" className="mt-4 outline-none">
+   175→          <WeightsTab />
+   176→        </TabsContent>
+   177→        <TabsContent value="targets" className="mt-4 outline-none">
+   178→          <TargetsTab />
+   179→        </TabsContent>
+   180→        <TabsContent value="audit" className="mt-4 outline-none">
+   181→          <AuditTab />
+   182→        </TabsContent>
+   183→      </Tabs>
+   184→    </PageContainer>
+   185→  );
+   186→}
+   187→
+   188→// --- Tab 1: Weights -------------------------------------------------------
+   189→
+   190→function WeightsTab() {
+   191→  const qc = useQueryClient();
+   192→  const { data, isLoading } = useQuery({
+   193→    queryKey: ["settings"],
+   194→    queryFn: () => apiGet<{ settings: Settings }>("/api/settings"),
+   195→  });
+   196→
+   197→  const [weights, setWeights] = useState<Settings["weights"]>(
+   198→    DEFAULT_SETTINGS.weights
+   199→  );
+   200→  const [saving, setSaving] = useState(false);
+   201→  const [hydrated, setHydrated] = useState(false);
+   202→
+   203→  useEffect(() => {
+   204→    if (data?.settings?.weights) {
+   205→      setWeights(data.settings.weights);
+   206→      setHydrated(true);
+   207→    }
+   208→  }, [data]);
+   209→
+   210→  const total = useMemo(
+   211→    () =>
+   212→      Object.values(weights).reduce(
+   213→        (sum, v) => sum + (Number(v) || 0),
+   214→        0
+   215→      ),
+   216→    [weights]
+   217→  );
+   218→
+   219→  const valid = Math.abs(total - 100) <= 0.5;
+   220→  const dirty =
+   221→    !hydrated ||
+   222→    JSON.stringify(data?.settings?.weights ?? DEFAULT_SETTINGS.weights) !==
+   223→      JSON.stringify(weights);
+   224→
+   225→  async function handleSave() {
+   226→    if (!valid) {
+   227→      toast.error("Jumlah pemberat mesti 100%.", {
+   228→        description: `Kini ${total}%.`,
+   229→      });
+   230→      return;
+   231→    }
+   232→    setSaving(true);
+   233→    try {
+   234→      const payload: Settings = {
+   235→        ...(data?.settings ?? DEFAULT_SETTINGS),
+   236→        weights,
+   237→      };
+   238→      const res = await apiPut<{ settings: Settings }>(
+   239→        "/api/settings",
+   240→        payload
+   241→      );
+   242→      setWeights(res.settings.weights);
+   243→      qc.invalidateQueries({ queryKey: ["settings"] });
+   244→      qc.invalidateQueries({ queryKey: ["performance"] });
+   245→      qc.invalidateQueries({ queryKey: ["dashboard"] });
+   246→      toast.success("Pemberat dimensi disimpan.");
+   247→    } catch (e: unknown) {
+   248→      const msg = e instanceof Error ? e.message : "Ralat tidak diketahui";
+   249→      toast.error("Gagal menyimpan pemberat.", { description: msg });
+   250→    } finally {
+   251→      setSaving(false);
+   252→    }
+   253→  }
+   254→
+   255→  if (isLoading) return <WeightsSkeleton />;
+   256→
+   257→  return (
+   258→    <Card className="p-4 lg:p-6">
+   259→      <SectionHeader
+   260→        title="Pemberat Dimensi Prestasi"
+   261→        subtitle="Jumlah pemberat keenam-enam dimensi mesti 100%"
+   262→        icon={Scale}
+   263→        action={
+   264→          <Button
+   265→            size="sm"
+   266→            onClick={handleSave}
+   267→            disabled={!valid || saving || !dirty}
+   268→          >
+   269→            {saving ? (
+   270→              <Loader2 className="w-4 h-4 animate-spin" />
+   271→            ) : (
+   272→              <Save className="w-4 h-4" />
+   273→            )}
+   274→            Simpan Pemberat
+   275→          </Button>
+   276→        }
+   277→      />
+   278→
+   279→      {/* Total bar */}
+   280→      <div
+   281→        className={cn(
+   282→          "flex items-center justify-between gap-3 rounded-lg border px-4 py-3 mb-4",
+   283→          valid ? "border-border bg-muted/40" : "border-status-danger/30 bg-status-danger/5"
+   284→        )}
+   285→      >
+   286→        <div className="flex items-center gap-2">
+   287→          {valid ? (
+   288→            <CheckCircle2 className="w-4 h-4 text-status-success" />
+   289→          ) : (
+   290→            <AlertTriangle className="w-4 h-4 text-status-danger" />
+   291→          )}
+   292→          <span className="text-sm font-medium">Jumlah Pemberat</span>
+   293→        </div>
+   294→        <div className="flex items-center gap-3">
+   295→          <span
+   296→            className={cn(
+   297→              "text-2xl font-semibold tabular-nums",
+   298→              valid ? "text-foreground" : "text-status-danger"
+   299→            )}
+   300→          >
+   301→            {total}%
+   302→          </span>
+   303→          <Badge variant={valid ? "secondary" : "destructive"}>
+   304→            {valid ? "Sah" : `Baki ${100 - total}%`}
+   305→          </Badge>
+   306→        </div>
+   307→      </div>
+   308→
+   309→      {!valid && (
+   310→        <div className="flex items-start gap-2 rounded-md bg-status-danger/10 border border-status-danger/20 px-3 py-2 mb-4 text-xs text-status-danger">
+   311→          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+   312→          <span>
+   313→            Jumlah pemberat kini <strong>{total}%</strong>. Laraskan supaya
+   314→            berjumlah 100% untuk membolehkan butang Simpan.
+   315→          </span>
+   316→        </div>
+   317→      )}
+   318→
+   319→      <div className="space-y-5">
+   320→        {DIMENSIONS.map((d) => {
+   321→          const val = Number(weights[d.key]) || 0;
+   322→          return (
+   323→            <div
+   324→              key={d.key}
+   325→              className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-start sm:items-center"
+   326→            >
+   327→              <div className="min-w-0">
+   328→                <div className="flex items-baseline justify-between gap-3 mb-1.5">
+   329→                  <div className="min-w-0">
+   330→                    <Label className="text-sm font-medium">{d.label}</Label>
+   331→                    <p className="text-[11px] text-muted-foreground truncate">
+   332→                      {d.desc}
+   333→                    </p>
+   334→                  </div>
+   335→                  <span className="text-sm font-semibold tabular-nums text-accent shrink-0">
+   336→                    {val}%
+   337→                  </span>
+   338→                </div>
+   339→                <Slider
+   340→                  value={[val]}
+   341→                  min={0}
+   342→                  max={100}
+   343→                  step={1}
+   344→                  onValueChange={(v) =>
+   345→                    setWeights((w) => ({ ...w, [d.key]: v[0] ?? 0 }))
+   346→                  }
+   347→                  className="w-full"
+   348→                  aria-label={d.label}
+   349→                />
+   350→              </div>
+   351→              <div className="flex items-center gap-2 sm:w-28">
+   352→                <Input
+   353→                  type="number"
+   354→                  min={0}
+   355→                  max={100}
+   356→                  value={val}
+   357→                  onChange={(e) =>
+   358→                    setWeights((w) => ({
+   359→                      ...w,
+   360→                      [d.key]: Math.max(
+   361→                        0,
+   362→                        Math.min(100, Number(e.target.value) || 0)
+   363→                      ),
+   364→                    }))
+   365→                  }
+   366→                  className="text-right tabular-nums"
+   367→                />
+   368→                <span className="text-xs text-muted-foreground">%</span>
+   369→              </div>
+   370→            </div>
+   371→          );
+   372→        })}
+   373→      </div>
+   374→    </Card>
+   375→  );
+   376→}
+   377→
+   378→// --- Tab 2: Targets & Grades ----------------------------------------------
+   379→
+   380→function TargetsTab() {
+   381→  const qc = useQueryClient();
+   382→  const { data, isLoading } = useQuery({
+   383→    queryKey: ["settings"],
+   384→    queryFn: () => apiGet<{ settings: Settings }>("/api/settings"),
+   385→  });
+   386→
+   387→  const [form, setForm] = useState<Settings>(DEFAULT_SETTINGS);
+   388→  const [saving, setSaving] = useState(false);
+   389→  const [hydrated, setHydrated] = useState(false);
+   390→  const [newHoliday, setNewHoliday] = useState("");
+   391→
+   392→  useEffect(() => {
+   393→    if (data?.settings) {
+   394→      setForm(data.settings);
+   395→      setHydrated(true);
+   396→    }
+   397→  }, [data]);
+   398→
+   399→  const dirty =
+   400→    !hydrated ||
+   401→    JSON.stringify(data?.settings ?? DEFAULT_SETTINGS) !== JSON.stringify(form);
+   402→
+   403→  function setField<K extends keyof Settings>(key: K, value: Settings[K]) {
+   404→    setForm((f) => ({ ...f, [key]: value }));
+   405→  }
+   406→
+   407→  function setGrade(
+   408→    grade: keyof Settings["gradeBands"],
+   409→    field: "min" | "max",
+   410→    value: number
+   411→  ) {
+   412→    setForm((f) => ({
+   413→      ...f,
+   414→      gradeBands: {
+   415→        ...f.gradeBands,
+   416→        [grade]: { ...f.gradeBands[grade], [field]: value },
+   417→      },
+   418→    }));
+   419→  }
+   420→
+   421→  function toggleWorkingDay(day: number) {
+   422→    setForm((f) => ({
+   423→      ...f,
+   424→      workingDays: f.workingDays.includes(day)
+   425→        ? f.workingDays.filter((d) => d !== day)
+   426→        : [...f.workingDays, day].sort((a, b) => a - b),
+   427→    }));
+   428→  }
+   429→
+   430→  function addHoliday() {
+   431→    if (!newHoliday) return;
+   432→    if (form.holidays.includes(newHoliday)) {
+   433→      toast.error("Tarikh cuti sudah wujud dalam senarai.");
+   434→      return;
+   435→    }
+   436→    setForm((f) => ({
+   437→      ...f,
+   438→      holidays: [...f.holidays, newHoliday].sort(),
+   439→    }));
+   440→    setNewHoliday("");
+   441→  }
+   442→
+   443→  function removeHoliday(date: string) {
+   444→    setForm((f) => ({
+   445→      ...f,
+   446→      holidays: f.holidays.filter((d) => d !== date),
+   447→    }));
+   448→  }
+   449→
+   450→  async function handleSave() {
+   451→    setSaving(true);
+   452→    try {
+   453→      const res = await apiPut<{ settings: Settings }>("/api/settings", form);
+   454→      setForm(res.settings);
+   455→      qc.invalidateQueries({ queryKey: ["settings"] });
+   456→      qc.invalidateQueries({ queryKey: ["performance"] });
+   457→      qc.invalidateQueries({ queryKey: ["workload"] });
+   458→      qc.invalidateQueries({ queryKey: ["dashboard"] });
+   459→      toast.success("Tetapan sasaran & gred disimpan.");
+   460→    } catch (e: unknown) {
+   461→      const msg = e instanceof Error ? e.message : "Ralat tidak diketahui";
+   462→      toast.error("Gagal menyimpan tetapan.", { description: msg });
+   463→    } finally {
+   464→      setSaving(false);
+   465→    }
+   466→  }
+   467→
+   468→  if (isLoading) return <TargetsSkeleton />;
+   469→
+   470→  return (
+   471→    <div className="space-y-4">
+   472→      {/* Initiative targets */}
+   473→      <Card className="p-4 lg:p-6">
+   474→        <SectionHeader
+   475→          title="Sasaran Inisiatif"
+   476→          subtitle="Sasaran mata inisiatif bulanan & suku tahunan"
+   477→          icon={Award}
+   478→        />
+   479→        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   480→          <div className="space-y-1.5">
+   481→            <Label htmlFor="monthly-target">Sasaran Bulanan (mata)</Label>
+   482→            <Input
+   483→              id="monthly-target"
+   484→              type="number"
+   485→              min={0}
+   486→              max={200}
+   487→              value={form.initiativeTargetMonthly}
+   488→              onChange={(e) =>
+   489→                setField(
+   490→                  "initiativeTargetMonthly",
+   491→                  Math.max(0, Number(e.target.value) || 0)
+   492→                )
+   493→              }
+   494→              className="tabular-nums"
+   495→            />
+   496→            <p className="text-[11px] text-muted-foreground">
+   497→              Minimum mata inisiatif setiap staf sebulan
+   498→            </p>
+   499→          </div>
+   500→          <div className="space-y-1.5">
+   501→            <Label htmlFor="quarterly-target">Sasaran Suku Tahunan (mata)</Label>
+   502→            <Input
+   503→              id="quarterly-target"
+   504→              type="number"
+   505→              min={0}
+   506→              max={500}
+   507→              value={form.initiativeTargetQuarterly}
+   508→              onChange={(e) =>
+   509→                setField(
+   510→                  "initiativeTargetQuarterly",
+   511→                  Math.max(0, Number(e.target.value) || 0)
+   512→                )
+   513→              }
+   514→              className="tabular-nums"
+   515→            />
+   516→            <p className="text-[11px] text-muted-foreground">
+   517→              Minimum mata inisiatif setiap staf setiap suku tahun
+   518→            </p>
+   519→          </div>
+   520→        </div>
+   521→      </Card>
+   522→
+   523→      {/* Grade bands */}
+   524→      <Card className="p-4 lg:p-6">
+   525→        <SectionHeader
+   526→          title="Julat Gred Prestasi"
+   527→          subtitle="Takrif julat markah bagi setiap gred (0-100)"
+   528→          icon={Award}
+   529→        />
+   530→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+   531→          {(
+   532→            Object.keys(form.gradeBands) as (keyof Settings["gradeBands"])[]
+   533→          ).map((g) => {
+   534→            const band = form.gradeBands[g];
+   535→            const tone =
+   536→              g === "A" || g === "B"
+   537→                ? "bg-status-success/10 text-status-success"
+   538→                : g === "C"
+   539→                  ? "bg-status-warning/15 text-status-warning"
+   540→                  : "bg-status-danger/10 text-status-danger";
+   541→            return (
+   542→              <div
+   543→                key={g}
+   544→                className="rounded-lg border border-border p-3 bg-muted/20"
+   545→              >
+   546→                <div className="flex items-center justify-between mb-2">
+   547→                  <div className="flex items-center gap-2">
+   548→                    <span
+   549→                      className={cn(
+   550→                        "w-7 h-7 rounded-md flex items-center justify-center text-sm font-semibold",
+   551→                        tone
+   552→                      )}
+   553→                    >
+   554→                      {g}
+   555→                    </span>
+   556→                    <span className="text-sm font-medium">
+   557→                      {GRADE_LABELS[g]}
+   558→                    </span>
+   559→                  </div>
+   560→                </div>
+   561→                <div className="grid grid-cols-2 gap-2">
+   562→                  <div>
+   563→                    <Label className="text-[11px] text-muted-foreground">
+   564→                      Minimum
+   565→                    </Label>
+   566→                    <Input
+   567→                      type="number"
+   568→                      min={0}
+   569→                      max={100}
+   570→                      value={band.min}
+   571→                      onChange={(e) =>
+   572→                        setGrade(
+   573→                          g,
+   574→                          "min",
+   575→                          Math.max(
+   576→                            0,
+   577→                            Math.min(100, Number(e.target.value) || 0)
+   578→                          )
+   579→                        )
+   580→                      }
+   581→                      className="tabular-nums"
+   582→                    />
+   583→                  </div>
+   584→                  <div>
+   585→                    <Label className="text-[11px] text-muted-foreground">
+   586→                      Maksimum
+   587→                    </Label>
+   588→                    <Input
+   589→                      type="number"
+   590→                      min={0}
+   591→                      max={100}
+   592→                      value={band.max}
+   593→                      onChange={(e) =>
+   594→                        setGrade(
+   595→                          g,
+   596→                          "max",
+   597→                          Math.max(
+   598→                            0,
+   599→                            Math.min(100, Number(e.target.value) || 0)
+   600→                          )
+   601→                        )
+   602→                      }
+   603→                      className="tabular-nums"
+   604→                    />
+   605→                  </div>
+   606→                </div>
+   607→              </div>
+   608→            );
+   609→          })}
+   610→        </div>
+   611→      </Card>
+   612→
+   613→      {/* Working days & holidays */}
+   614→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   615→        <Card className="p-4 lg:p-6">
+   616→          <SectionHeader
+   617→            title="Hari Bekerja"
+   618→            subtitle="Pilih hari bekerja mingguan"
+   619→            icon={Calendar}
+   620→          />
+   621→          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+   622→            {WEEKDAY_LABELS.map((label, idx) => {
+   623→              const checked = form.workingDays.includes(idx);
+   624→              return (
+   625→                <label
+   626→                  key={idx}
+   627→                  className={cn(
+   628→                    "flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer transition-colors text-sm select-none",
+   629→                    checked
+   630→                      ? "border-primary bg-primary/5 text-foreground"
+   631→                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+   632→                  )}
+   633→                >
+   634→                  <Checkbox
+   635→                    checked={checked}
+   636→                    onCheckedChange={() => toggleWorkingDay(idx)}
+   637→                  />
+   638→                  {label}
+   639→                </label>
+   640→              );
+   641→            })}
+   642→          </div>
+   643→        </Card>
+   644→
+   645→        <Card className="p-4 lg:p-6">
+   646→          <SectionHeader
+   647→            title="Hari Cuti"
+   648→            subtitle="Tarikh cuti dikecualikan daripada pengiraan"
+   649→            icon={Calendar}
+   650→          />
+   651→          <div className="flex items-end gap-2 mb-3">
+   652→            <div className="flex-1 space-y-1.5">
+   653→              <Label htmlFor="new-holiday" className="sr-only">
+   654→                Tambah hari cuti
+   655→              </Label>
+   656→              <Input
+   657→                id="new-holiday"
+   658→                type="date"
+   659→                value={newHoliday}
+   660→                onChange={(e) => setNewHoliday(e.target.value)}
+   661→              />
+   662→            </div>
+   663→            <Button
+   664→              variant="secondary"
+   665→              onClick={addHoliday}
+   666→              disabled={!newHoliday}
+   667→            >
+   668→              <Plus className="w-4 h-4" />
+   669→              Tambah
+   670→            </Button>
+   671→          </div>
+   672→          <Separator className="mb-3" />
+   673→          {form.holidays.length === 0 ? (
+   674→            <EmptyState
+   675→              icon={Calendar}
+   676→              title="Tiada hari cuti"
+   677→              description="Tambah tarikh cuti di atas."
+   678→            />
+   679→          ) : (
+   680→            <ul className="max-h-64 overflow-y-auto scroll-slim space-y-1.5 pr-1">
+   681→              {form.holidays.map((d) => (
+   682→                <li
+   683→                  key={d}
+   684→                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm"
+   685→                >
+   686→                  <span>
+   687→                    {formatDate(d + "T00:00:00", {
+   688→                      weekday: "short",
+   689→                      day: "2-digit",
+   690→                      month: "short",
+   691→                      year: "numeric",
+   692→                    })}
+   693→                  </span>
+   694→                  <Button
+   695→                    size="icon"
+   696→                    variant="ghost"
+   697→                    className="h-7 w-7 text-muted-foreground hover:text-status-danger"
+   698→                    onClick={() => removeHoliday(d)}
+   699→                    aria-label={`Buang cuti ${d}`}
+   700→                  >
+   701→                    <Trash2 className="w-3.5 h-3.5" />
+   702→                  </Button>
+   703→                </li>
+   704→              ))}
+   705→            </ul>
+   706→          )}
+   707→        </Card>
+   708→      </div>
+   709→
+   710→      {/* Save bar */}
+   711→      <div className="flex items-center justify-end gap-2">
+   712→        <Button onClick={handleSave} disabled={saving || !dirty}>
+   713→          {saving ? (
+   714→            <Loader2 className="w-4 h-4 animate-spin" />
+   715→          ) : (
+   716→            <Save className="w-4 h-4" />
+   717→          )}
+   718→          Simpan Perubahan
+   719→        </Button>
+   720→      </div>
+   721→    </div>
+   722→  );
+   723→}
+   724→
+   725→// --- Tab 3: Audit & Reset -------------------------------------------------
+   726→
+   727→function AuditTab() {
+   728→  const qc = useQueryClient();
+   729→  const { data: auditData, isLoading: auditLoading } = useQuery({
+   730→    queryKey: ["audit"],
+   731→    queryFn: () => apiGet<{ logs: AuditLog[] }>("/api/audit"),
+   732→  });
+   733→
+   734→  const [resetOpen, setResetOpen] = useState(false);
+   735→  const [resetting, setResetting] = useState(false);
+   736→
+   737→  async function handleReset() {
+   738→    setResetting(true);
+   739→    try {
+   740→      const res = await apiPost<{ ok: boolean; message: string }>(
+   741→        "/api/settings/reset"
+   742→      );
+   743→      toast.success(res.message || "Data demo telah diset semula.");
+   744→      setResetOpen(false);
+   745→      qc.invalidateQueries();
+   746→      // Full reload to re-establish session after seed reset
+   747→      setTimeout(() => window.location.reload(), 900);
+   748→    } catch (e: unknown) {
+   749→      const msg = e instanceof Error ? e.message : "Ralat tidak diketahui";
+   750→      toast.error("Gagal set semula data.", { description: msg });
+   751→    } finally {
+   752→      setResetting(false);
+   753→    }
+   754→  }
+   755→
+   756→  const logs = auditData?.logs ?? [];
+   757→
+   758→  return (
+   759→    <div className="space-y-4">
+   760→      {/* Reset danger card */}
+   761→      <Card className="p-4 lg:p-6 border-status-danger/30">
+   762→        <SectionHeader
+   763→          title="Set Semula Data Demo"
+   764→          subtitle="Pulihkan semua data keadaan demo asal"
+   765→          icon={RotateCcw}
+   766→        />
+   767→        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg bg-status-danger/5 border border-status-danger/20 px-4 py-3">
+   768→          <div className="flex items-start gap-2 text-sm">
+   769→            <ShieldAlert className="w-5 h-5 text-status-danger shrink-0 mt-0.5" />
+   770→            <div>
+   771→              <p className="font-medium text-foreground">
+   772→                Tindakan ini akan memadam semua data semasa
+   773→              </p>
+   774→              <p className="text-xs text-muted-foreground mt-0.5">
+   775→                Semua pengguna, tugasan, inisiatif, dan log akan digantikan
+   776→                dengan data demo asal. Tindakan ini tidak boleh diundur.
+   777→              </p>
+   778→            </div>
+   779→          </div>
+   780→          <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+   781→            <AlertDialogTrigger asChild>
+   782→              <Button variant="destructive" className="shrink-0">
+   783→                <RotateCcw className="w-4 h-4" />
+   784→                Set Semula Data Demo
+   785→              </Button>
+   786→            </AlertDialogTrigger>
+   787→            <AlertDialogContent>
+   788→              <AlertDialogHeader>
+   789→                <AlertDialogTitle className="flex items-center gap-2">
+   790→                  <AlertTriangle className="w-5 h-5 text-status-danger" />
+   791→                  Sahkan Set Semula Data
+   792→                </AlertDialogTitle>
+   793→                <AlertDialogDescription>
+   794→                  Adakah anda pasti? Semua data semasa (pengguna, tugasan,
+   795→                  inisiatif, prestasi, log) akan digantikan dengan data demo
+   796→                  asal. Tindakan ini{" "}
+   797→                  <strong>tidak boleh diundur</strong>.
+   798→                </AlertDialogDescription>
+   799→              </AlertDialogHeader>
+   800→              <AlertDialogFooter>
+   801→                <AlertDialogCancel disabled={resetting}>Batal</AlertDialogCancel>
+   802→                <AlertDialogAction
+   803→                  onClick={(e) => {
+   804→                    e.preventDefault();
+   805→                    void handleReset();
+   806→                  }}
+   807→                  disabled={resetting}
+   808→                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20"
+   809→                >
+   810→                  {resetting ? (
+   811→                    <Loader2 className="w-4 h-4 animate-spin" />
+   812→                  ) : (
+   813→                    <RotateCcw className="w-4 h-4" />
+   814→                  )}
+   815→                  Ya, Set Semula
+   816→                </AlertDialogAction>
+   817→              </AlertDialogFooter>
+   818→            </AlertDialogContent>
+   819→          </AlertDialog>
+   820→        </div>
+   821→      </Card>
+   822→
+   823→      {/* Audit log */}
+   824→      <Card className="p-4 lg:p-6">
+   825→        <SectionHeader
+   826→          title="Log Audit"
+   827→          subtitle="Rekod aktiviti terkini sistem (100 rekod terakhir)"
+   828→          icon={History}
+   829→        />
+   830→        {auditLoading ? (
+   831→          <AuditSkeleton />
+   832→        ) : logs.length === 0 ? (
+   833→          <EmptyState
+   834→            icon={History}
+   835→            title="Tiada log audit"
+   836→            description="Aktiviti sistem akan dipaparkan di sini."
+   837→          />
+   838→        ) : (
+   839→          <div className="max-h-[520px] overflow-y-auto scroll-slim rounded-md border border-border">
+   840→            <Table>
+   841→              <TableHeader className="sticky top-0 bg-muted/90 backdrop-blur z-10">
+   842→                <TableRow>
+   843→                  <TableHead className="w-36">Masa</TableHead>
+   844→                  <TableHead className="w-40">Pelaku</TableHead>
+   845→                  <TableHead className="w-44">Tindakan</TableHead>
+   846→                  <TableHead className="w-28">Entiti</TableHead>
+   847→                  <TableHead>Butiran</TableHead>
+   848→                </TableRow>
+   849→              </TableHeader>
+   850→              <TableBody>
+   851→                {logs.map((log) => {
+   852→                  const style = actionStyle(log.action);
+   853→                  return (
+   854→                    <TableRow key={log.id}>
+   855→                      <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+   856→                        {formatDateTime(log.timestamp)}
+   857→                      </TableCell>
+   858→                      <TableCell className="text-sm font-medium">
+   859→                        {log.actorName || "—"}
+   860→                      </TableCell>
+   861→                      <TableCell>
+   862→                        <span
+   863→                          className={cn(
+   864→                            "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium",
+   865→                            style.bg,
+   866→                            style.text
+   867→                          )}
+   868→                        >
+   869→                          {log.action}
+   870→                        </span>
+   871→                      </TableCell>
+   872→                      <TableCell className="text-xs text-muted-foreground">
+   873→                        {log.entity}
+   874→                      </TableCell>
+   875→                      <TableCell
+   876→                        className="text-xs text-muted-foreground max-w-md truncate"
+   877→                        title={log.detail}
+   878→                      >
+   879→                        {log.detail || "—"}
+   880→                      </TableCell>
+   881→                    </TableRow>
+   882→                  );
+   883→                })}
+   884→              </TableBody>
+   885→            </Table>
+   886→          </div>
+   887→        )}
+   888→      </Card>
+   889→    </div>
+   890→  );
+   891→}
+   892→
+   893→// --- Skeletons ------------------------------------------------------------
+   894→
+   895→function WeightsSkeleton() {
+   896→  return (
+   897→    <Card className="p-4 lg:p-6">
+   898→      <div className="h-6 w-64 bg-muted rounded animate-pulse mb-4" />
+   899→      <div className="h-16 bg-muted/60 rounded animate-pulse mb-4" />
+   900→      <div className="space-y-5">
+   901→        {Array.from({ length: 6 }).map((_, i) => (
+   902→          <div key={i} className="h-14 bg-muted/60 rounded animate-pulse" />
+   903→        ))}
+   904→      </div>
+   905→    </Card>
+   906→  );
+   907→}
+   908→
+   909→function TargetsSkeleton() {
+   910→  return (
+   911→    <div className="space-y-4">
+   912→      <Card className="p-4 lg:p-6">
+   913→        <div className="h-6 w-48 bg-muted rounded animate-pulse mb-4" />
+   914→        <div className="h-20 bg-muted/60 rounded animate-pulse" />
+   915→      </Card>
+   916→      <Card className="p-4 lg:p-6">
+   917→        <div className="h-6 w-48 bg-muted rounded animate-pulse mb-4" />
+   918→        <div className="h-40 bg-muted/60 rounded animate-pulse" />
+   919→      </Card>
+   920→    </div>
+   921→  );
+   922→}
+   923→
+   924→function AuditSkeleton() {
+   925→  return (
+   926→    <div className="space-y-2">
+   927→      {Array.from({ length: 6 }).map((_, i) => (
+   928→        <div key={i} className="h-10 bg-muted/60 rounded animate-pulse" />
+   929→      ))}
+   930→    </div>
+   931→  );
+   932→}
+   933→

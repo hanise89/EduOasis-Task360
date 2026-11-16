@@ -3,35 +3,36 @@
 import type { TaskStatus, Priority, WorkloadStatus } from "@/types";
 
 // Status colors per PRD: Green=Selesai/Seimbang, Yellow=Hampir/Tinggi, Red=Lewat/Berlebihan, Blue=Dalam Proses, Grey=Belum Mula
-export const TASK_STATUS_META: Record<string, { label: string; color: string; bg: string; text: string; dot: string }> = {
-  "Belum Mula": { label: "Belum Mula", color: "neutral", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-status-neutral" },
-  "Dalam Proses": { label: "Dalam Proses", color: "info", bg: "bg-status-info/10", text: "text-status-info", dot: "bg-status-info" },
-  "Menunggu Semakan": { label: "Menunggu Semakan", color: "warning", bg: "bg-status-warning/15", text: "text-status-warning", dot: "bg-status-warning" },
-  "Selesai": { label: "Selesai", color: "success", bg: "bg-status-success/10", text: "text-status-success", dot: "bg-status-success" },
-  "Disekat": { label: "Disekat", color: "danger", bg: "bg-status-danger/10", text: "text-status-danger", dot: "bg-status-danger" },
-  "Dibatalkan": { label: "Dibatalkan", color: "neutral", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-status-neutral" },
+// Swiss treatment: hairline borders, square indicators (no decorative dots)
+export const TASK_STATUS_META: Record<string, { label: string; color: string; bg: string; text: string; dot: string; border: string }> = {
+  "Belum Mula": { label: "Belum Mula", color: "neutral", bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-status-neutral", border: "border-border" },
+  "Dalam Proses": { label: "Dalam Proses", color: "info", bg: "bg-status-info/8", text: "text-status-info", dot: "bg-status-info", border: "border-status-info/30" },
+  "Menunggu Semakan": { label: "Menunggu Semakan", color: "warning", bg: "bg-status-warning/12", text: "text-status-warning", dot: "bg-status-warning", border: "border-status-warning/30" },
+  "Selesai": { label: "Selesai", color: "success", bg: "bg-status-success/8", text: "text-status-success", dot: "bg-status-success", border: "border-status-success/30" },
+  "Disekat": { label: "Disekat", color: "danger", bg: "bg-status-danger/8", text: "text-status-danger", dot: "bg-status-danger", border: "border-status-danger/30" },
+  "Dibatalkan": { label: "Dibatalkan", color: "neutral", bg: "bg-muted/60", text: "text-muted-foreground", dot: "bg-status-neutral", border: "border-border" },
 };
 
-export const PRIORITY_META: Record<string, { label: string; text: string; bg: string }> = {
-  "Rendah": { label: "Rendah", text: "text-muted-foreground", bg: "bg-muted" },
-  "Sederhana": { label: "Sederhana", text: "text-status-info", bg: "bg-status-info/10" },
-  "Tinggi": { label: "Tinggi", text: "text-status-warning", bg: "bg-status-warning/15" },
-  "Segera": { label: "Segera", text: "text-status-danger", bg: "bg-status-danger/10" },
+export const PRIORITY_META: Record<string, { label: string; text: string; bg: string; border: string }> = {
+  "Rendah": { label: "Rendah", text: "text-muted-foreground", bg: "bg-muted/60", border: "border-border" },
+  "Sederhana": { label: "Sederhana", text: "text-status-info", bg: "bg-status-info/8", border: "border-status-info/30" },
+  "Tinggi": { label: "Tinggi", text: "text-status-warning", bg: "bg-status-warning/12", border: "border-status-warning/30" },
+  "Segera": { label: "Seggera", text: "text-status-danger", bg: "bg-status-danger/8", border: "border-status-danger/30" },
 };
 
-export const WORKLOAD_META: Record<string, { label: string; text: string; bg: string; ring: string }> = {
-  "Rendah": { label: "Rendah", text: "text-status-info", bg: "bg-status-info/10", ring: "ring-status-info/20" },
-  "Seimbang": { label: "Seimbang", text: "text-status-success", bg: "bg-status-success/10", ring: "ring-status-success/20" },
-  "Tinggi": { label: "Tinggi", text: "text-status-warning", bg: "bg-status-warning/15", ring: "ring-status-warning/20" },
-  "Beban Berlebihan": { label: "Beban Berlebihan", text: "text-status-danger", bg: "bg-status-danger/10", ring: "ring-status-danger/20" },
+export const WORKLOAD_META: Record<string, { label: string; text: string; bg: string; ring: string; border: string }> = {
+  "Rendah": { label: "Rendah", text: "text-status-info", bg: "bg-status-info/8", ring: "ring-status-info/20", border: "border-status-info/30" },
+  "Seimbang": { label: "Seimbang", text: "text-status-success", bg: "bg-status-success/8", ring: "ring-status-success/20", border: "border-status-success/30" },
+  "Tinggi": { label: "Tinggi", text: "text-status-warning", bg: "bg-status-warning/12", ring: "ring-status-warning/20", border: "border-status-warning/30" },
+  "Beban Berlebihan": { label: "Berlebihan", text: "text-status-danger", bg: "bg-status-danger/8", ring: "ring-status-danger/20", border: "border-status-danger/30" },
 };
 
-export const GRADE_META: Record<string, { label: string; text: string; bg: string }> = {
-  A: { label: "Cemerlang", text: "text-status-success", bg: "bg-status-success/10" },
-  B: { label: "Baik", text: "text-status-success", bg: "bg-status-success/10" },
-  C: { label: "Memuaskan", text: "text-status-warning", bg: "bg-status-warning/15" },
-  D: { label: "Perlu Penambahbaikan", text: "text-status-danger", bg: "bg-status-danger/10" },
-  E: { label: "Kritikal", text: "text-status-danger", bg: "bg-status-danger/10" },
+export const GRADE_META: Record<string, { label: string; text: string; bg: string; border: string }> = {
+  A: { label: "Cemerlang", text: "text-status-success", bg: "bg-status-success/8", border: "border-status-success/30" },
+  B: { label: "Baik", text: "text-status-success", bg: "bg-status-success/8", border: "border-status-success/30" },
+  C: { label: "Memuaskan", text: "text-status-warning", bg: "bg-status-warning/12", border: "border-status-warning/30" },
+  D: { label: "Perlu Penambahbaikan", text: "text-status-danger", bg: "bg-status-danger/8", border: "border-status-danger/30" },
+  E: { label: "Kritikal", text: "text-status-danger", bg: "bg-status-danger/8", border: "border-status-danger/30" },
 };
 
 export const CATEGORY_META: Record<string, { label: string; icon: string }> = {

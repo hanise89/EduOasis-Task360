@@ -30,13 +30,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import {
   Lightbulb,
@@ -115,36 +108,35 @@ export function InitiativesView() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Sumbangan Tambahan
-          </span>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">
-            Inisiatif &amp; Penyelesaian Masalah
+      <div className="flex items-end justify-between gap-3 flex-wrap pb-4 border-b border-border">
+        <div className="min-w-0">
+          <span className="eyebrow">Inisiatif &amp; Penyelesaian Masalah</span>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1">
+            Inisiatif Staf
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Sumbangan di luar tugasan rasmi
           </p>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button size="sm" onClick={() => setCreateOpen(true)} className="rounded-sm">
           <Plus className="w-4 h-4 mr-1" /> Hantar Inisiatif
         </Button>
       </div>
 
       {/* Status filter tabs */}
-      <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-muted/60 border border-border overflow-x-auto max-w-full">
-        {STATUS_FILTERS.map((f) => (
+      <div className="inline-flex items-center gap-0.5 p-0.5 rounded-sm border border-border overflow-x-auto max-w-full bg-muted/30">
+        {STATUS_FILTERS.map((f, i) => (
           <button
             key={f.key}
             onClick={() => setStatusFilter(f.key)}
             className={cn(
-              "px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap",
+              "px-3 py-1.5 rounded-sm text-xs font-medium transition-colors whitespace-nowrap",
               statusFilter === f.key
-                ? "bg-background shadow-sm text-foreground"
+                ? "bg-foreground text-background"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
+            <span className="eyebrow mr-1.5 opacity-60 hidden sm:inline">{String(i + 1).padStart(2, "0")}</span>
             {f.label}
           </button>
         ))}
@@ -229,19 +221,20 @@ function InitiativeKPIs() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {cards.map((c) => (
-        <Card key={c.label} className="p-4 lg:p-5">
+      {cards.map((c, i) => (
+        <Card key={c.label} className="p-4 lg:p-5 card-flat rounded-md relative">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {c.label}
+              <div className="flex items-baseline gap-2">
+                <span className="index-numeral text-xs">{String(i + 1).padStart(2, "0")}</span>
+                <span className="eyebrow">{c.label}</span>
               </div>
-              <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
+              <div className="mt-2 text-3xl font-semibold num-display tabular-nums tracking-tight">
                 {c.value}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{c.hint}</div>
             </div>
-            <div className={cn("w-9 h-9 rounded-md flex items-center justify-center shrink-0", c.bg)}>
+            <div className={cn("w-9 h-9 rounded-sm flex items-center justify-center shrink-0 border border-border", c.bg)}>
               <c.icon className={cn("w-5 h-5", c.accent)} />
             </div>
           </div>
@@ -275,9 +268,11 @@ function InitiativeList({
   const initiatives = data?.initiatives || [];
 
   return (
-    <Card className="p-4 lg:p-5">
+    <Card className="p-4 lg:p-5 card-flat rounded-md">
       <SectionHeader
         title="Senarai Inisiatif"
+        eyebrow="Inisiatif"
+        index="01"
         subtitle={
           statusFilter === "all"
             ? "Semua inisiatif"
@@ -354,12 +349,12 @@ function InitiativeCard({
   const hasDetails = Boolean(initiative.problem || initiative.action || initiative.outcome);
 
   return (
-    <div className="rounded-md border border-border bg-background hover:border-accent/30 transition-colors">
+    <div className="rounded-md border border-border bg-background card-flat hover:border-accent/40 transition-colors">
       {/* Card header */}
       <div className="flex items-start gap-3 p-3 lg:p-4">
-        <Avatar className="w-9 h-9 shrink-0" style={{ backgroundColor: avatarColor }}>
+        <Avatar className="w-9 h-9 shrink-0 rounded-sm" style={{ backgroundColor: avatarColor }}>
           <AvatarFallback
-            className="text-white text-xs font-semibold"
+            className="text-white text-xs font-semibold rounded-sm"
             style={{ backgroundColor: avatarColor }}
           >
             {initials(ownerName)}
@@ -372,7 +367,7 @@ function InitiativeCard({
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h3 className="text-sm font-semibold truncate">{initiative.title}</h3>
                 {isOwn && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal rounded-sm">
                     Anda
                   </Badge>
                 )}
@@ -386,32 +381,34 @@ function InitiativeCard({
                   </>
                 )}
                 <span aria-hidden>·</span>
-                <span>{relativeTime(initiative.submittedAt)}</span>
+                <span className="tabular-nums">{relativeTime(initiative.submittedAt)}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap shrink-0">
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium",
+                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-medium border border-border",
                   statusMeta.bg,
                   statusMeta.text
                 )}
               >
-                <span className={cn("w-1.5 h-1.5 rounded-full", statusMeta.dot)} />
+                <span className={cn("w-1.5 h-1.5 rounded-sm", statusMeta.dot)} />
                 {statusMeta.label}
               </span>
               {initiative.status === "Disahkan" && impactMeta && (
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium",
+                    "inline-flex items-baseline gap-1.5 px-2 py-0.5 rounded-sm text-xs font-medium border border-border",
                     impactMeta.bg,
                     impactMeta.text
                   )}
                   title={`Impak ${impactMeta.label} = ${POINTS[impact]} mata`}
                 >
-                  <Sparkles className="w-3 h-3" />
-                  {impactMeta.label} · {initiative.points} mata
+                  <Sparkles className="w-3 h-3 translate-y-0.5" />
+                  <span className="eyebrow">{impactMeta.label}</span>
+                  <span className="num-display tabular-nums font-semibold">{initiative.points}</span>
+                  <span className="opacity-70">mata</span>
                 </span>
               )}
             </div>
@@ -429,7 +426,7 @@ function InitiativeCard({
             {hasDetails && (
               <button
                 onClick={() => setExpanded((v) => !v)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline rounded-sm"
               >
                 {expanded ? (
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -447,7 +444,7 @@ function InitiativeCard({
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors max-w-[180px] truncate"
+                    className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-sm border border-border text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors max-w-[180px] truncate"
                     title={link}
                   >
                     <Paperclip className="w-3 h-3 shrink-0" />
@@ -456,7 +453,7 @@ function InitiativeCard({
                   </a>
                 ))}
                 {initiative.evidenceLinks.length > 2 && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground tabular-nums">
                     +{initiative.evidenceLinks.length - 2} lagi
                   </span>
                 )}
@@ -476,19 +473,19 @@ function InitiativeCard({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 lg:px-4 pb-3 lg:pb-4 pt-1 grid grid-cols-1 gap-2.5">
+            <div className="px-3 lg:px-4 pb-3 lg:pb-4 pt-1 grid grid-cols-1 gap-2.5 hairline-t mx-3 lg:mx-4 mt-1 pt-3">
               <DetailRow icon={Target} label="Masalah" text={initiative.problem} />
               <DetailRow icon={Rocket} label="Tindakan" text={initiative.action} />
               <DetailRow icon={Award} label="Hasil" text={initiative.outcome} />
               {initiative.verifiedAt && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
                   <Clock className="w-3.5 h-3.5" />
-                  Disahkan pada {formatDate(initiative.verifiedAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  Disahkan pada <span className="tabular-nums">{formatDate(initiative.verifiedAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
               )}
               {initiative.gmComment && (
-                <div className="mt-1 p-2.5 rounded-md bg-muted/50 border border-border">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                <div className="mt-1 p-2.5 rounded-sm bg-muted/40 border border-border">
+                  <div className="eyebrow mb-1">
                     Komen GM
                   </div>
                   <p className="text-xs text-foreground/90">{initiative.gmComment}</p>
@@ -521,10 +518,8 @@ function DetailRow({
     <div className="flex items-start gap-2">
       <Icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <p className="text-xs text-foreground/90 mt-0.5 whitespace-pre-wrap">{text}</p>
+        <span className="eyebrow block mb-0.5">{label}</span>
+        <p className="text-xs text-foreground/90 whitespace-pre-wrap">{text}</p>
       </div>
     </div>
   );
@@ -566,40 +561,55 @@ function VerifyForm({
   };
 
   return (
-    <div className="border-t border-border bg-muted/20 p-3 lg:p-4">
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
+    <div className="hairline-t border-border bg-muted/20 p-3 lg:p-4">
+      <div className="eyebrow mb-3 flex items-center gap-1.5">
         <Award className="w-3.5 h-3.5 text-accent" />
         Pengesahan GM
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Tahap Impak</Label>
-          <Select value={impact} onValueChange={(v) => setImpact(v as ImpactLevel)}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(POINTS) as ImpactLevel[]).map((lvl) => (
-                <SelectItem key={lvl} value={lvl}>
-                  {lvl} · {POINTS[lvl]} mata
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Komen GM (pilihan)</Label>
-          <Input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Contoh: Inisiatif yang baik..."
-            className="h-9"
-          />
+
+      {/* Impact level — 3-step horizontal bar */}
+      <div className="space-y-2 mb-3">
+        <Label className="eyebrow">Tahap Impak</Label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {(Object.keys(POINTS) as ImpactLevel[]).map((lvl) => {
+            const active = impact === lvl;
+            return (
+              <button
+                key={lvl}
+                type="button"
+                onClick={() => setImpact(lvl)}
+                aria-pressed={active}
+                className={cn(
+                  "rounded-none border px-2 py-2 text-left transition-colors",
+                  active
+                    ? "bg-accent border-accent text-accent-foreground"
+                    : "border-border bg-background hover:border-accent/40"
+                )}
+              >
+                <div className="text-xs font-medium">{lvl}</div>
+                <div className={cn("text-lg font-semibold num-display tabular-nums", active ? "text-accent-foreground" : "text-foreground")}>
+                  {POINTS[lvl]}
+                  <span className="text-[10px] font-normal opacity-70 ml-1">mata</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-3 flex-wrap">
+
+      <div className="space-y-1.5 mb-3">
+        <Label className="eyebrow">Komen GM (pilihan)</Label>
+        <Input
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Contoh: Inisiatif yang baik..."
+          className="h-9 rounded-sm"
+        />
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           size="sm"
+          className="rounded-sm"
           onClick={() => handleVerify("Disahkan")}
           disabled={submitting !== null}
         >
@@ -613,6 +623,7 @@ function VerifyForm({
         <Button
           size="sm"
           variant="outline"
+          className="rounded-sm"
           onClick={() => handleVerify("Ditolak")}
           disabled={submitting !== null}
         >
@@ -640,18 +651,19 @@ function InitiativeWall() {
   const confirmed = data?.initiatives || [];
 
   return (
-    <Card className="overflow-hidden">
-      {/* Celebratory header */}
-      <div className="bg-gradient-to-r from-accent to-[#1F3A5F] px-4 lg:px-5 py-4">
+    <Card className="overflow-hidden card-flat rounded-md">
+      {/* Celebratory header — Swiss rule */}
+      <div className="bg-foreground px-4 lg:px-5 py-4 hairline-b border-border/0">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-md bg-white/15 flex items-center justify-center backdrop-blur-sm">
-            <Trophy className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-sm bg-background/15 flex items-center justify-center">
+            <Trophy className="w-5 h-5 text-background" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white tracking-tight">
+            <div className="eyebrow text-background/70">Pengiktirafan</div>
+            <h2 className="text-base font-semibold text-background tracking-tight">
               Dinding Inisiatif
             </h2>
-            <p className="text-xs text-white/80">
+            <p className="text-xs text-background/70">
               Pengiktirafan untuk sumbangan luar biasa pasukan
             </p>
           </div>
@@ -664,7 +676,7 @@ function InitiativeWall() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-24 rounded-md border border-border bg-muted/30 animate-pulse"
+                className="h-24 rounded-sm border border-border bg-muted/30 animate-pulse"
               />
             ))}
           </div>
@@ -704,17 +716,17 @@ function WallCard({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.25, delay: Math.min(index * 0.05, 0.4) }}
-      className="relative rounded-md border border-border bg-background p-3.5 hover:border-accent/40 hover:shadow-sm transition-all"
+      className="relative rounded-sm border border-border bg-background p-3.5 card-flat hover:border-accent/40 transition-colors"
     >
-      {/* Decorative star */}
-      <div className="absolute top-2 right-2 text-accent/15">
-        <Sparkles className="w-4 h-4" />
+      <div className="flex items-baseline justify-between gap-2 mb-2">
+        <span className="index-numeral text-xs">{String(index + 1).padStart(2, "0")}</span>
+        <span className="eyebrow">{impactMeta?.label} · {POINTS[impact] ?? 0} mata</span>
       </div>
 
       <div className="flex items-start gap-2.5">
-        <Avatar className="w-9 h-9 shrink-0" style={{ backgroundColor: avatarColor }}>
+        <Avatar className="w-9 h-9 shrink-0 rounded-sm" style={{ backgroundColor: avatarColor }}>
           <AvatarFallback
-            className="text-white text-xs font-semibold"
+            className="text-white text-xs font-semibold rounded-sm"
             style={{ backgroundColor: avatarColor }}
           >
             {initials(ownerName)}
@@ -734,23 +746,14 @@ function WallCard({
         {initiative.title}
       </h4>
 
-      <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
-            impactMeta?.bg,
-            impactMeta?.text
-          )}
-        >
-          <span className={cn("w-1.5 h-1.5 rounded-full", impactMeta?.dot)} />
-          {impactMeta?.label}
-        </span>
-        <div className="flex items-baseline gap-0.5">
-          <span className="text-lg font-semibold tabular-nums text-accent">
+      <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 hairline-t border-border">
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-semibold num-display tabular-nums text-accent">
             {initiative.points}
           </span>
-          <span className="text-[10px] text-muted-foreground">mata</span>
+          <span className="text-[10px] text-muted-foreground eyebrow ml-0.5">mata</span>
         </div>
+        <Sparkles className="w-4 h-4 text-accent/40" />
       </div>
     </motion.div>
   );
@@ -820,102 +823,114 @@ function CreateInitiativeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto scroll-slim">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto scroll-slim rounded-md">
         <DialogHeader>
+          <div className="eyebrow">Inisiatif Baharu</div>
           <DialogTitle className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-accent" />
-            Hantar Inisiatif Baharu
+            Hantar Inisiatif
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3.5 py-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs">
-              Tajuk Inisiatif <span className="text-status-danger">*</span>
-            </Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Automasi laporan mingguan jualan"
-              className="h-9"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Masalah / Pencabar</Label>
-            <Textarea
-              value={problem}
-              onChange={(e) => setProblem(e.target.value)}
-              placeholder="Apakah masalah yang dikenal pasti?"
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Tindakan</Label>
-            <Textarea
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-              placeholder="Langkah yang diambil..."
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Hasil / Outcome</Label>
-            <Textarea
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
-              placeholder="Apakah hasil yang dicapai?"
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Pautan Bukti (pilihan)</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={addLink}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Tambah pautan
-              </Button>
+          {/* Section: Butiran Inisiatif */}
+          <div className="space-y-3.5">
+            <div className="eyebrow">Butiran Inisiatif</div>
+            <div className="space-y-1.5">
+              <Label className="eyebrow">
+                Tajuk Inisiatif <span className="text-status-danger">*</span>
+              </Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Contoh: Automasi laporan mingguan jualan"
+                className="h-9 rounded-sm"
+              />
             </div>
-            <div className="space-y-2">
-              {links.map((link, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                  <Input
-                    value={link}
-                    onChange={(e) => updateLink(i, e.target.value)}
-                    placeholder="https://..."
-                    className="h-9"
-                  />
-                  {links.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-9 p-0 text-muted-foreground hover:text-status-danger"
-                      onClick={() => removeLink(i)}
-                      aria-label="Buang pautan"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+
+            <div className="space-y-1.5">
+              <Label className="eyebrow">Masalah / Pencabar</Label>
+              <Textarea
+                value={problem}
+                onChange={(e) => setProblem(e.target.value)}
+                placeholder="Apakah masalah yang dikenal pasti?"
+                rows={2}
+                className="rounded-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="eyebrow">Tindakan</Label>
+              <Textarea
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                placeholder="Langkah yang diambil..."
+                rows={2}
+                className="rounded-sm"
+              />
+            </div>
+          </div>
+
+          {/* Section: Impak & Bukti */}
+          <div className="hairline-t pt-4 space-y-3.5">
+            <div className="eyebrow">Impak &amp; Bukti</div>
+            <div className="space-y-1.5">
+              <Label className="eyebrow">Hasil / Outcome</Label>
+              <Textarea
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+                placeholder="Apakah hasil yang dicapai?"
+                rows={2}
+                className="rounded-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="eyebrow">Pautan Bukti (pilihan)</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs rounded-sm"
+                  onClick={addLink}
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Tambah pautan
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {links.map((link, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Input
+                      value={link}
+                      onChange={(e) => updateLink(i, e.target.value)}
+                      placeholder="https://..."
+                      className="h-9 rounded-sm"
+                    />
+                    {links.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0 text-muted-foreground hover:text-status-danger rounded-sm"
+                        onClick={() => removeLink(i)}
+                        aria-label="Buang pautan"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting}>
+          <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting} className="rounded-sm">
             Batal
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting} className="rounded-sm">
             {submitting ? (
               <Loader2 className="w-4 h-4 mr-1 animate-spin" />
             ) : (

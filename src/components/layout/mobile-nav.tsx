@@ -52,8 +52,10 @@ export function MobileNav({ onNavigate }: { onNavigate?: () => void }) {
                 onNavigate?.();
               }}
               className={cn(
-                "flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-md transition-colors",
-                active ? "text-primary" : "text-muted-foreground"
+                "flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-sm border transition-colors",
+                active
+                  ? "text-primary border-border bg-muted/50"
+                  : "text-muted-foreground border-transparent"
               )}
             >
               <item.icon className="w-4 h-4" />

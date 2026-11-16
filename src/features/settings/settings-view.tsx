@@ -140,12 +140,10 @@ export function SettingsView() {
 
   return (
     <PageContainer>
-      <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div className="flex items-end justify-between gap-3 flex-wrap pb-4 border-b border-border">
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Pentadbiran Sistem
-          </span>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5 flex items-center gap-2">
+          <span className="eyebrow">Tetapan Sistem</span>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1 flex items-center gap-2">
             <SettingsIcon className="w-5 h-5 text-accent" />
             Tetapan & Konfigurasi
           </h1>
@@ -156,16 +154,16 @@ export function SettingsView() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full sm:w-auto overflow-x-auto h-auto sm:h-9">
-          <TabsTrigger value="weights" className="gap-1.5">
+        <TabsList className="w-full sm:w-auto overflow-x-auto h-auto sm:h-9 rounded-sm bg-muted/30 border border-border p-0.5">
+          <TabsTrigger value="weights" className="gap-1.5 rounded-sm">
             <Scale className="w-3.5 h-3.5" />
             Pemberat Dimensi
           </TabsTrigger>
-          <TabsTrigger value="targets" className="gap-1.5">
+          <TabsTrigger value="targets" className="gap-1.5 rounded-sm">
             <Award className="w-3.5 h-3.5" />
             Sasaran &amp; Gred
           </TabsTrigger>
-          <TabsTrigger value="audit" className="gap-1.5">
+          <TabsTrigger value="audit" className="gap-1.5 rounded-sm">
             <History className="w-3.5 h-3.5" />
             Log Audit &amp; Set Semula
           </TabsTrigger>
@@ -255,14 +253,17 @@ function WeightsTab() {
   if (isLoading) return <WeightsSkeleton />;
 
   return (
-    <Card className="p-4 lg:p-6">
+    <Card className="p-4 lg:p-6 card-flat rounded-md">
       <SectionHeader
         title="Pemberat Dimensi Prestasi"
+        eyebrow="Pemberat & Sasaran"
+        index="01"
         subtitle="Jumlah pemberat keenam-enam dimensi mesti 100%"
         icon={Scale}
         action={
           <Button
             size="sm"
+            className="rounded-sm"
             onClick={handleSave}
             disabled={!valid || saving || !dirty}
           >
@@ -279,7 +280,7 @@ function WeightsTab() {
       {/* Total bar */}
       <div
         className={cn(
-          "flex items-center justify-between gap-3 rounded-lg border px-4 py-3 mb-4",
+          "flex items-center justify-between gap-3 rounded-sm border px-4 py-3 mb-4",
           valid ? "border-border bg-muted/40" : "border-status-danger/30 bg-status-danger/5"
         )}
       >
@@ -289,50 +290,53 @@ function WeightsTab() {
           ) : (
             <AlertTriangle className="w-4 h-4 text-status-danger" />
           )}
-          <span className="text-sm font-medium">Jumlah Pemberat</span>
+          <span className="eyebrow">Jumlah Pemberat</span>
         </div>
         <div className="flex items-center gap-3">
           <span
             className={cn(
-              "text-2xl font-semibold tabular-nums",
+              "text-2xl font-semibold num-display tabular-nums",
               valid ? "text-foreground" : "text-status-danger"
             )}
           >
             {total}%
           </span>
-          <Badge variant={valid ? "secondary" : "destructive"}>
+          <Badge variant={valid ? "secondary" : "destructive"} className="rounded-sm">
             {valid ? "Sah" : `Baki ${100 - total}%`}
           </Badge>
         </div>
       </div>
 
       {!valid && (
-        <div className="flex items-start gap-2 rounded-md bg-status-danger/10 border border-status-danger/20 px-3 py-2 mb-4 text-xs text-status-danger">
+        <div className="flex items-start gap-2 rounded-sm bg-status-danger/10 border border-status-danger/20 px-3 py-2 mb-4 text-xs text-status-danger">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
-            Jumlah pemberat kini <strong>{total}%</strong>. Laraskan supaya
+            Jumlah pemberat kini <strong className="tabular-nums">{total}%</strong>. Laraskan supaya
             berjumlah 100% untuk membolehkan butang Simpan.
           </span>
         </div>
       )}
 
       <div className="space-y-5">
-        {DIMENSIONS.map((d) => {
+        {DIMENSIONS.map((d, i) => {
           const val = Number(weights[d.key]) || 0;
           return (
             <div
               key={d.key}
-              className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-start sm:items-center"
+              className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:gap-4 items-start sm:items-center hairline-t border-border pt-4 first:border-0 first:pt-0"
             >
               <div className="min-w-0">
                 <div className="flex items-baseline justify-between gap-3 mb-1.5">
-                  <div className="min-w-0">
-                    <Label className="text-sm font-medium">{d.label}</Label>
-                    <p className="text-[11px] text-muted-foreground truncate">
-                      {d.desc}
-                    </p>
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="index-numeral text-xs">{String(i + 1).padStart(2, "0")}</span>
+                    <div className="min-w-0">
+                      <div className="eyebrow">{d.label}</div>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                        {d.desc}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums text-accent shrink-0">
+                  <span className="text-sm font-semibold tabular-nums num-display text-accent shrink-0">
                     {val}%
                   </span>
                 </div>
@@ -363,7 +367,7 @@ function WeightsTab() {
                       ),
                     }))
                   }
-                  className="text-right tabular-nums"
+                  className="text-right tabular-nums rounded-sm"
                 />
                 <span className="text-xs text-muted-foreground">%</span>
               </div>
@@ -470,15 +474,17 @@ function TargetsTab() {
   return (
     <div className="space-y-4">
       {/* Initiative targets */}
-      <Card className="p-4 lg:p-6">
+      <Card className="p-4 lg:p-6 card-flat rounded-md">
         <SectionHeader
           title="Sasaran Inisiatif"
+          eyebrow="Kategori & Sasaran"
+          index="02"
           subtitle="Sasaran mata inisiatif bulanan & suku tahunan"
           icon={Award}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="monthly-target">Sasaran Bulanan (mata)</Label>
+            <Label className="eyebrow" htmlFor="monthly-target">Sasaran Bulanan (mata)</Label>
             <Input
               id="monthly-target"
               type="number"
@@ -491,14 +497,14 @@ function TargetsTab() {
                   Math.max(0, Number(e.target.value) || 0)
                 )
               }
-              className="tabular-nums"
+              className="tabular-nums num-display rounded-sm"
             />
             <p className="text-[11px] text-muted-foreground">
               Minimum mata inisiatif setiap staf sebulan
             </p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="quarterly-target">Sasaran Suku Tahunan (mata)</Label>
+            <Label className="eyebrow" htmlFor="quarterly-target">Sasaran Suku Tahunan (mata)</Label>
             <Input
               id="quarterly-target"
               type="number"
@@ -511,7 +517,7 @@ function TargetsTab() {
                   Math.max(0, Number(e.target.value) || 0)
                 )
               }
-              className="tabular-nums"
+              className="tabular-nums num-display rounded-sm"
             />
             <p className="text-[11px] text-muted-foreground">
               Minimum mata inisiatif setiap staf setiap suku tahun
@@ -521,16 +527,18 @@ function TargetsTab() {
       </Card>
 
       {/* Grade bands */}
-      <Card className="p-4 lg:p-6">
+      <Card className="p-4 lg:p-6 card-flat rounded-md">
         <SectionHeader
           title="Julat Gred Prestasi"
+          eyebrow="Gred"
+          index="03"
           subtitle="Takrif julat markah bagi setiap gred (0-100)"
           icon={Award}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {(
             Object.keys(form.gradeBands) as (keyof Settings["gradeBands"])[]
-          ).map((g) => {
+          ).map((g, idx) => {
             const band = form.gradeBands[g];
             const tone =
               g === "A" || g === "B"
@@ -541,13 +549,13 @@ function TargetsTab() {
             return (
               <div
                 key={g}
-                className="rounded-lg border border-border p-3 bg-muted/20"
+                className="rounded-sm border border-border p-3 bg-muted/20 card-flat"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
-                        "w-7 h-7 rounded-md flex items-center justify-center text-sm font-semibold",
+                        "w-7 h-7 rounded-sm flex items-center justify-center text-sm font-semibold border border-border tabular-nums",
                         tone
                       )}
                     >
@@ -557,10 +565,11 @@ function TargetsTab() {
                       {GRADE_LABELS[g]}
                     </span>
                   </div>
+                  <span className="eyebrow tabular-nums">{String(idx + 1).padStart(2, "0")}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[11px] text-muted-foreground">
+                    <Label className="eyebrow">
                       Minimum
                     </Label>
                     <Input
@@ -578,11 +587,11 @@ function TargetsTab() {
                           )
                         )
                       }
-                      className="tabular-nums"
+                      className="tabular-nums rounded-sm"
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] text-muted-foreground">
+                    <Label className="eyebrow">
                       Maksimum
                     </Label>
                     <Input
@@ -600,7 +609,7 @@ function TargetsTab() {
                           )
                         )
                       }
-                      className="tabular-nums"
+                      className="tabular-nums rounded-sm"
                     />
                   </div>
                 </div>
@@ -612,9 +621,11 @@ function TargetsTab() {
 
       {/* Working days & holidays */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-4 lg:p-6">
+        <Card className="p-4 lg:p-6 card-flat rounded-md">
           <SectionHeader
             title="Hari Bekerja"
+            eyebrow="Kalendar"
+            index="04"
             subtitle="Pilih hari bekerja mingguan"
             icon={Calendar}
           />
@@ -622,29 +633,35 @@ function TargetsTab() {
             {WEEKDAY_LABELS.map((label, idx) => {
               const checked = form.workingDays.includes(idx);
               return (
-                <label
+                <button
                   key={idx}
+                  type="button"
+                  onClick={() => toggleWorkingDay(idx)}
+                  aria-pressed={checked}
                   className={cn(
-                    "flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer transition-colors text-sm select-none",
+                    "rounded-sm border px-3 py-2 cursor-pointer transition-colors text-sm select-none flex items-center gap-2 justify-center",
                     checked
-                      ? "border-primary bg-primary/5 text-foreground"
-                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 bg-background"
                   )}
                 >
                   <Checkbox
                     checked={checked}
                     onCheckedChange={() => toggleWorkingDay(idx)}
+                    className="pointer-events-none"
                   />
                   {label}
-                </label>
+                </button>
               );
             })}
           </div>
         </Card>
 
-        <Card className="p-4 lg:p-6">
+        <Card className="p-4 lg:p-6 card-flat rounded-md">
           <SectionHeader
             title="Hari Cuti"
+            eyebrow="Kalendar"
+            index="05"
             subtitle="Tarikh cuti dikecualikan daripada pengiraan"
             icon={Calendar}
           />
@@ -658,10 +675,12 @@ function TargetsTab() {
                 type="date"
                 value={newHoliday}
                 onChange={(e) => setNewHoliday(e.target.value)}
+                className="rounded-sm"
               />
             </div>
             <Button
               variant="secondary"
+              className="rounded-sm"
               onClick={addHoliday}
               disabled={!newHoliday}
             >
@@ -669,7 +688,7 @@ function TargetsTab() {
               Tambah
             </Button>
           </div>
-          <Separator className="mb-3" />
+          <Separator className="mb-3 bg-border" />
           {form.holidays.length === 0 ? (
             <EmptyState
               icon={Calendar}
@@ -681,9 +700,9 @@ function TargetsTab() {
               {form.holidays.map((d) => (
                 <li
                   key={d}
-                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-sm border border-border bg-background px-3 py-2 text-sm hairline-b"
                 >
-                  <span>
+                  <span className="tabular-nums">
                     {formatDate(d + "T00:00:00", {
                       weekday: "short",
                       day: "2-digit",
@@ -694,7 +713,7 @@ function TargetsTab() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-muted-foreground hover:text-status-danger"
+                    className="h-7 w-7 text-muted-foreground hover:text-status-danger rounded-sm"
                     onClick={() => removeHoliday(d)}
                     aria-label={`Buang cuti ${d}`}
                   >
@@ -709,7 +728,7 @@ function TargetsTab() {
 
       {/* Save bar */}
       <div className="flex items-center justify-end gap-2">
-        <Button onClick={handleSave} disabled={saving || !dirty}>
+        <Button onClick={handleSave} disabled={saving || !dirty} className="rounded-sm">
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
@@ -757,73 +776,12 @@ function AuditTab() {
 
   return (
     <div className="space-y-4">
-      {/* Reset danger card */}
-      <Card className="p-4 lg:p-6 border-status-danger/30">
-        <SectionHeader
-          title="Set Semula Data Demo"
-          subtitle="Pulihkan semua data keadaan demo asal"
-          icon={RotateCcw}
-        />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg bg-status-danger/5 border border-status-danger/20 px-4 py-3">
-          <div className="flex items-start gap-2 text-sm">
-            <ShieldAlert className="w-5 h-5 text-status-danger shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-foreground">
-                Tindakan ini akan memadam semua data semasa
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Semua pengguna, tugasan, inisiatif, dan log akan digantikan
-                dengan data demo asal. Tindakan ini tidak boleh diundur.
-              </p>
-            </div>
-          </div>
-          <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="shrink-0">
-                <RotateCcw className="w-4 h-4" />
-                Set Semula Data Demo
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-status-danger" />
-                  Sahkan Set Semula Data
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Adakah anda pasti? Semua data semasa (pengguna, tugasan,
-                  inisiatif, prestasi, log) akan digantikan dengan data demo
-                  asal. Tindakan ini{" "}
-                  <strong>tidak boleh diundur</strong>.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={resetting}>Batal</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void handleReset();
-                  }}
-                  disabled={resetting}
-                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20"
-                >
-                  {resetting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="w-4 h-4" />
-                  )}
-                  Ya, Set Semula
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </Card>
-
       {/* Audit log */}
-      <Card className="p-4 lg:p-6">
+      <Card className="p-4 lg:p-6 card-flat rounded-md">
         <SectionHeader
           title="Log Audit"
+          eyebrow="Log Audit"
+          index="06"
           subtitle="Rekod aktiviti terkini sistem (100 rekod terakhir)"
           icon={History}
         />
@@ -839,19 +797,19 @@ function AuditTab() {
           <div className="max-h-[520px] overflow-y-auto scroll-slim rounded-md border border-border">
             <Table>
               <TableHeader className="sticky top-0 bg-muted/90 backdrop-blur z-10">
-                <TableRow>
-                  <TableHead className="w-36">Masa</TableHead>
-                  <TableHead className="w-40">Pelaku</TableHead>
-                  <TableHead className="w-44">Tindakan</TableHead>
-                  <TableHead className="w-28">Entiti</TableHead>
-                  <TableHead>Butiran</TableHead>
+                <TableRow className="hover:bg-transparent border-b border-border">
+                  <TableHead className="w-36 eyebrow">Masa</TableHead>
+                  <TableHead className="w-40 eyebrow">Pelaku</TableHead>
+                  <TableHead className="w-44 eyebrow">Tindakan</TableHead>
+                  <TableHead className="w-28 eyebrow">Entiti</TableHead>
+                  <TableHead className="eyebrow">Butiran</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logs.map((log) => {
                   const style = actionStyle(log.action);
                   return (
-                    <TableRow key={log.id}>
+                    <TableRow key={log.id} className="border-b border-border/50">
                       <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                         {formatDateTime(log.timestamp)}
                       </TableCell>
@@ -861,7 +819,7 @@ function AuditTab() {
                       <TableCell>
                         <span
                           className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium",
+                            "inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-medium border border-border",
                             style.bg,
                             style.text
                           )}
@@ -885,6 +843,78 @@ function AuditTab() {
             </Table>
           </div>
         )}
+      </Card>
+
+      {/* Reset danger card — at bottom with warning alert above */}
+      <Card className="p-4 lg:p-6 border-status-danger/30 card-flat rounded-md">
+        <SectionHeader
+          title="Set Semula Data Demo"
+          eyebrow="Pentadbiran Bahaya"
+          index="07"
+          subtitle="Pulihkan semua data keadaan demo asal"
+          icon={RotateCcw}
+        />
+        <div className="flex items-start gap-2 rounded-sm bg-status-danger/10 border border-status-danger/30 px-3 py-2 mb-4 text-xs text-status-danger">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>
+            <strong>Amaran:</strong> Tindakan ini akan memadam semua data semasa dan tidak boleh diundur.
+            Pastikan anda telah menyandarkan data penting sebelum meneruskan.
+          </span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-sm bg-status-danger/5 border border-status-danger/20 px-4 py-3">
+          <div className="flex items-start gap-2 text-sm">
+            <ShieldAlert className="w-5 h-5 text-status-danger shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground">
+                Tindakan ini akan memadam semua data semasa
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Semua pengguna, tugasan, inisiatif, dan log akan digantikan
+                dengan data demo asal. Tindakan ini tidak boleh diundur.
+              </p>
+            </div>
+          </div>
+          <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="shrink-0 rounded-sm border border-status-danger/40">
+                <RotateCcw className="w-4 h-4" />
+                Set Semula Data Demo
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-status-danger" />
+                  Sahkan Set Semula Data
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Adakah anda pasti? Semua data semasa (pengguna, tugasan,
+                  inisiatif, prestasi, log) akan digantikan dengan data demo
+                  asal. Tindakan ini{" "}
+                  <strong>tidak boleh diundur</strong>.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={resetting} className="rounded-sm">Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void handleReset();
+                  }}
+                  disabled={resetting}
+                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 rounded-sm"
+                >
+                  {resetting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
+                  Ya, Set Semula
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </Card>
     </div>
   );

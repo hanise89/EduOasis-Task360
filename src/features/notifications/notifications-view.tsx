@@ -19,7 +19,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import {
   Bell,
@@ -91,6 +90,16 @@ const TONE_ICON: Record<string, string> = {
   danger: "text-status-danger bg-status-danger/10",
   neutral: "text-muted-foreground bg-muted",
   accent: "text-oasis-teal bg-oasis-teal/10",
+};
+
+// 2px-wide status-colored vertical bar (sharp, full height)
+const TONE_BAR: Record<string, string> = {
+  info: "bg-status-info",
+  success: "bg-status-success",
+  warning: "bg-status-warning",
+  danger: "bg-status-danger",
+  neutral: "bg-muted-foreground/50",
+  accent: "bg-accent",
 };
 
 // ---- Date grouping --------------------------------------------------------
@@ -226,142 +235,139 @@ export function NotificationsView() {
   return (
     <PageContainer>
       {/* Page header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="hidden sm:flex w-11 h-11 rounded-xl bg-oasis-teal/10 items-center justify-center shrink-0">
-            <Bell className="w-5 h-5 text-oasis-teal" />
+      <div className="flex items-start justify-between gap-4 flex-wrap pb-4 border-b border-border">
+        <div className="min-w-0">
+          <span className="eyebrow">Pusat Notifikasi</span>
+          <div className="flex items-center gap-2 mt-1">
+            <h1 className="text-xl lg:text-2xl font-semibold tracking-tight">
+              Notifikasi
+            </h1>
+            {unreadCount > 0 && (
+              <Badge className="bg-status-danger/15 text-status-danger hover:bg-status-danger/20 border border-status-danger/30 rounded-sm h-6 min-w-6 px-2 tabular-nums num-display">
+                {unreadCount} belum dibaca
+              </Badge>
+            )}
           </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Pusat Notifikasi
-            </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <h1 className="text-xl lg:text-2xl font-semibold tracking-tight">
-                Notifikasi
-              </h1>
-              {unreadCount > 0 && (
-                <Badge className="bg-status-danger/15 text-status-danger hover:bg-status-danger/20 border-0 rounded-full h-6 min-w-6 px-2 tabular-nums">
-                  {unreadCount} belum dibaca
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Kemaskini tugasan, tarikh akhir, dan aktiviti penting pasukan anda.
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Kemaskini tugasan, tarikh akhir, dan aktiviti penting pasukan anda.
+          </p>
         </div>
         {unreadCount > 0 && (
-          <Button onClick={markAllRead} variant="outline" size="sm" className="gap-2">
+          <Button onClick={markAllRead} variant="outline" size="sm" className="gap-2 rounded-sm">
             <CheckCheck className="w-4 h-4" />
             Tanda Semua Dibaca
           </Button>
         )}
       </div>
 
-      {/* Tabs + list */}
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as NotifFilter)}>
-        <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="all" className="gap-1.5">
-            Semua
-            {counts.all > 0 && (
-              <span className="text-[10px] tabular-nums text-muted-foreground">
-                {counts.all}
+      {/* Filter tabs — sharp segmented control */}
+      <div className="inline-flex items-center gap-0.5 p-0.5 rounded-sm border border-border bg-muted/30 overflow-x-auto max-w-full">
+        {([
+          { key: "all", label: "Semua", count: counts.all, countClass: "text-muted-foreground" },
+          { key: "unread", label: "Belum Dibaca", count: counts.unread, countClass: counts.unread > 0 ? "text-status-danger font-medium" : "text-muted-foreground" },
+          { key: "read", label: "Dibaca", count: counts.read, countClass: "text-muted-foreground" },
+        ] as const).map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key as NotifFilter)}
+            className={cn(
+              "px-3 py-1.5 rounded-sm text-xs font-medium transition-colors whitespace-nowrap inline-flex items-center gap-1.5",
+              filter === f.key
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {f.label}
+            {f.count > 0 && (
+              <span className={cn(
+                "text-[10px] tabular-nums",
+                filter === f.key ? "text-background/70" : f.countClass
+              )}>
+                {f.count}
               </span>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="unread" className="gap-1.5">
-            Belum Dibaca
-            {counts.unread > 0 && (
-              <span className="text-[10px] tabular-nums text-status-danger font-medium">
-                {counts.unread}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="read" className="gap-1.5">
-            Dibaca
-            {counts.read > 0 && (
-              <span className="text-[10px] tabular-nums text-muted-foreground">
-                {counts.read}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value={filter} className="mt-4 focus-visible:outline-none">
-          {isLoading ? (
-            <NotifSkeletons />
-          ) : filtered.length === 0 ? (
-            <Card className="p-0 overflow-hidden border-border">
-              <EmptyState
-                icon={filter === "read" ? BellOff : Bell}
-                title={
-                  filter === "unread"
-                    ? "Tiada notifikasi belum dibaca"
-                    : filter === "read"
-                    ? "Belum ada notifikasi yang dibaca"
-                    : "Tiada notifikasi buat masa ini"
-                }
-                description={
-                  filter === "unread"
-                    ? "Anda telah mengemaskini semua. Notifikasi baru akan muncul di sini."
-                    : "Notifikasi berkaitan tugasan dan aktiviti akan dipaparkan di sini."
-                }
-              />
-            </Card>
-          ) : (
-            <div className="max-h-[calc(100vh-280px)] overflow-y-auto scroll-slim pr-1 -mr-1 space-y-5">
-              <AnimatePresence mode="popLayout">
-                {GROUP_ORDER.map((gk) => {
-                  const items = grouped.get(gk);
-                  if (!items || items.length === 0) return null;
-                  return (
-                    <motion.div
-                      key={gk}
-                      layout
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-2"
-                    >
-                      <SectionHeader
-                        title={GROUP_LABEL[gk]}
-                        subtitle={`${items.length} notifikasi`}
-                      />
-                      <div className="space-y-2">
-                        {items.map((n) => (
-                          <NotifRow
-                            key={n.id}
-                            n={n}
-                            onOpen={() => markRead(n)}
-                          />
-                        ))}
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Notification list */}
+      {isLoading ? (
+        <NotifSkeletons />
+      ) : filtered.length === 0 ? (
+        <Card className="p-0 overflow-hidden border-border card-flat rounded-md">
+          <EmptyState
+            icon={filter === "read" ? BellOff : Bell}
+            title={
+              filter === "unread"
+                ? "Tiada notifikasi belum dibaca"
+                : filter === "read"
+                ? "Belum ada notifikasi yang dibaca"
+                : "Tiada notifikasi buat masa ini"
+            }
+            description={
+              filter === "unread"
+                ? "Anda telah mengemaskini semua. Notifikasi baru akan muncul di sini."
+                : "Notifikasi berkaitan tugasan dan aktiviti akan dipaparkan di sini."
+            }
+          />
+        </Card>
+      ) : (
+        <div className="max-h-[calc(100vh-320px)] overflow-y-auto scroll-slim pr-1 -mr-1 space-y-5">
+          <AnimatePresence mode="popLayout">
+            {GROUP_ORDER.map((gk, gIdx) => {
+              const items = grouped.get(gk);
+              if (!items || items.length === 0) return null;
+              return (
+                <motion.div
+                  key={gk}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-0"
+                >
+                  <SectionHeader
+                    title={GROUP_LABEL[gk]}
+                    eyebrow="Kumpulan"
+                    index={String(gIdx + 1).padStart(2, "0")}
+                    subtitle={`${items.length} notifikasi`}
+                  />
+                  <Card className="p-0 overflow-hidden card-flat rounded-md">
+                    <div>
+                      {items.map((n, idx) => (
+                        <NotifRow
+                          key={n.id}
+                          n={n}
+                          isLast={idx === items.length - 1}
+                          onOpen={() => markRead(n)}
+                        />
+                      ))}
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      )}
     </PageContainer>
   );
 }
 
 // ---- Row component --------------------------------------------------------
 
-function NotifRow({ n, onOpen }: { n: Notification; onOpen: () => void }) {
+function NotifRow({ n, isLast, onOpen }: { n: Notification; isLast: boolean; onOpen: () => void }) {
   const meta = NOTIF_META[n.type as NotifType] ?? {
     icon: Bell,
     tone: "neutral" as const,
   };
   const Icon = meta.icon;
-  const toneClass = TONE_ICON[meta.tone];
+  const barClass = TONE_BAR[meta.tone];
   const unread = !n.read;
 
   return (
-    <Card
+    <div
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -373,81 +379,64 @@ function NotifRow({ n, onOpen }: { n: Notification; onOpen: () => void }) {
       }}
       aria-label={`${unread ? "Belum dibaca: " : ""}${n.title}`}
       className={cn(
-        "relative p-4 cursor-pointer border-border transition-colors group overflow-hidden",
-        "hover:border-accent/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        unread
-          ? "bg-accent/[0.04] border-accent/20"
-          : "bg-card opacity-80 hover:opacity-100"
+        "relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors group",
+        "hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        !isLast && "border-b border-border/50",
+        unread ? "bg-accent/[0.04]" : "bg-card opacity-80 hover:opacity-100"
       )}
     >
-      {/* Accent left border for unread */}
-      {unread && (
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-1 bg-oasis-teal"
-        />
-      )}
+      {/* 2px-wide status-colored vertical bar (sharp, full height) */}
+      <span
+        aria-hidden
+        className={cn("absolute left-0 top-0 bottom-0 w-0.5", barClass)}
+      />
 
-      <div className="flex items-start gap-3 min-w-0">
-        {/* Icon */}
-        <div
+      {/* Middle: title + message + timestamp */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span
+            className={cn(
+              "text-sm leading-snug truncate flex-1 min-w-0",
+              unread ? "font-semibold text-foreground" : "font-medium text-foreground/80"
+            )}
+          >
+            {n.title}
+          </span>
+        </div>
+        <p
           className={cn(
-            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-            toneClass
+            "mt-1 text-[13px] leading-relaxed line-clamp-2",
+            unread ? "text-muted-foreground" : "text-muted-foreground/80"
           )}
         >
-          <Icon className="w-[18px] h-[18px]" />
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span
-                  className={cn(
-                    "text-sm leading-snug truncate",
-                    unread ? "font-semibold text-foreground" : "font-medium text-foreground/80"
-                  )}
-                >
-                  {n.title}
-                </span>
-                {unread && (
-                  <span
-                    aria-hidden
-                    className="w-2 h-2 rounded-full bg-oasis-teal shrink-0 animate-pulse"
-                  />
-                )}
-              </div>
-              <p
-                className={cn(
-                  "mt-0.5 text-[13px] leading-relaxed line-clamp-2",
-                  unread ? "text-muted-foreground" : "text-muted-foreground/80"
-                )}
-              >
-                {n.message}
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground shrink-0 mt-0.5" />
-          </div>
-
-          {/* Footer meta */}
-          <div className="flex items-center gap-2 mt-2">
-            <span
-              className="text-[11px] text-muted-foreground tabular-nums"
-              title={formatDateTime(n.createdAt)}
-            >
-              {relativeTime(n.createdAt)}
-            </span>
-            {unread && (
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-oasis-teal">
-                Baharu
-              </span>
-            )}
-          </div>
+          {n.message}
+        </p>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span
+            className="text-[11px] text-muted-foreground tabular-nums"
+            title={formatDateTime(n.createdAt)}
+          >
+            {relativeTime(n.createdAt)}
+          </span>
+          {unread && (
+            <span className="eyebrow text-accent">Baharu</span>
+          )}
         </div>
       </div>
-    </Card>
+
+      {/* Right: read/unread indicator */}
+      <div className="shrink-0 mt-1">
+        {unread ? (
+          <span
+            aria-label="Belum dibaca"
+            className="block w-1.5 h-1.5 rounded-sm bg-primary"
+          />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground" />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -459,18 +448,18 @@ function NotifSkeletons() {
       {[0, 1, 2].map((g) => (
         <div key={g} className="space-y-2">
           <Skeleton className="h-4 w-24" />
-          <div className="space-y-2">
+          <Card className="p-0 overflow-hidden card-flat rounded-md">
             {[0, 1].map((i) => (
-              <Card key={i} className="p-4 flex items-start gap-3">
-                <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+              <div key={i} className="p-4 flex items-start gap-3 border-b border-border/50 last:border-0">
+                <Skeleton className="w-3.5 h-3.5 rounded-sm shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-2/3" />
                   <Skeleton className="h-3 w-full" />
                   <Skeleton className="h-3 w-1/2" />
                 </div>
-              </Card>
+              </div>
             ))}
-          </div>
+          </Card>
         </div>
       ))}
     </div>

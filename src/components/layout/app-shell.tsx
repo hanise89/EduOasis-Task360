@@ -94,7 +94,12 @@ function Footer() {
           <span>·</span>
           <span>Al Amin Edu Oasis</span>
         </div>
-        <div>v1.0 Prototaip · Sulit — Kegunaan Dalaman</div>
+        <div className="flex items-center gap-2">
+          <span className="eyebrow">Versi Prototaip</span>
+          <span className="tabular-nums">v1.0</span>
+          <span>·</span>
+          <span>Sulit — Kegunaan Dalaman</span>
+        </div>
       </div>
     </footer>
   );

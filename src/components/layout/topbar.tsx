@@ -103,7 +103,7 @@ export function Topbar() {
       {/* mobile menu */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button variant="ghost" size="icon" className="lg:hidden rounded-sm">
             <Menu className="w-5 h-5" />
           </Button>
         </SheetTrigger>
@@ -113,6 +113,7 @@ export function Topbar() {
       </Sheet>
 
       <div className="flex-1 min-w-0">
+        <div className="eyebrow mb-0.5">Bahagian</div>
         <h1 className="text-base lg:text-lg font-semibold tracking-tight truncate">
           {VIEW_TITLES[view] || "Papan Pemuka"}
         </h1>
@@ -121,16 +122,16 @@ export function Topbar() {
       {/* notifications */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notifikasi">
+          <Button variant="ghost" size="icon" className="relative rounded-sm" aria-label="Notifikasi">
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-status-danger text-[10px] font-bold text-white flex items-center justify-center">
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-sm bg-status-danger text-[10px] font-bold text-white flex items-center justify-center tabular-nums">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 sm:w-96 p-0" align="end">
+        <PopoverContent className="w-80 sm:w-96 p-0 rounded-sm" align="end">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="font-semibold text-sm">Notifikasi</div>
             {unreadCount > 0 && (
@@ -176,6 +177,7 @@ export function Topbar() {
         size="icon"
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         aria-label="Tukar tema"
+        className="rounded-sm"
       >
         {mounted ? (
           theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />
@@ -187,22 +189,22 @@ export function Topbar() {
       {/* user menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback style={{ backgroundColor: user.avatarColor }} className="text-white text-xs font-semibold">
+          <button className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-muted transition-colors">
+            <Avatar className="w-8 h-8 rounded-sm">
+              <AvatarFallback style={{ backgroundColor: user.avatarColor }} className="text-white text-xs font-semibold rounded-sm">
                 {initials(user.name)}
               </AvatarFallback>
             </Avatar>
             <div className="hidden sm:block text-left leading-tight">
               <div className="text-sm font-medium truncate max-w-[140px]">{user.name}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+              <div className="eyebrow">
                 {user.role === "GM" ? "General Manager" : "Staf"}
               </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden sm:block" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 rounded-sm">
           <DropdownMenuLabel className="text-xs text-muted-foreground">
             {user.email}
           </DropdownMenuLabel>

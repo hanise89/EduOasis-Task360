@@ -159,12 +159,10 @@ export function WorkloadView() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-end justify-between gap-3 flex-wrap border-b border-border pb-4">
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Pengurusan Beban Kerja
-          </span>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">
+          <span className="eyebrow">BEBAN KERJA STAF</span>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1">
             Pemantauan Beban Kerja
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -182,6 +180,7 @@ export function WorkloadView() {
           icon={Users}
           accent="primary"
           hint="staf aktif dipantau"
+          index={1}
         />
         <KpiCard
           label="Staf Beban Berlebihan"
@@ -189,6 +188,7 @@ export function WorkloadView() {
           icon={AlertTriangle}
           accent="danger"
           hint=">110% utilisasi"
+          index={2}
         />
         <KpiCard
           label="Staf Beban Tinggi"
@@ -196,6 +196,7 @@ export function WorkloadView() {
           icon={Gauge}
           accent="warning"
           hint="91–110% utilisasi"
+          index={3}
         />
         <KpiCard
           label="Staf Seimbang"
@@ -203,15 +204,18 @@ export function WorkloadView() {
           icon={CheckCircle2}
           accent="success"
           hint="60–90% utilisasi"
+          index={4}
         />
       </div>
 
       {/* Workload list */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Senarai Beban Kerja Staf"
           subtitle={`Tempoh: ${WEEK_LABEL[weeksAhead]}`}
           icon={Activity}
+          index={1}
+          eyebrow="Kapasiti"
         />
         {wlLoading ? (
           <div className="space-y-3">
@@ -220,7 +224,7 @@ export function WorkloadView() {
                 key={i}
                 className="flex items-center gap-3 p-3 rounded-md border border-border"
               >
-                <Skeleton className="w-9 h-9 rounded-full" />
+                <Skeleton className="w-9 h-9 rounded-sm" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-3.5 w-40" />
                   <Skeleton className="h-2 w-full" />
@@ -237,19 +241,21 @@ export function WorkloadView() {
           />
         ) : (
           <div className="space-y-2.5 max-h-[34rem] overflow-y-auto scroll-slim pr-1">
-            {sortedWorkloads.map((w) => (
-              <WorkloadRow key={w.userId} w={w} />
+            {sortedWorkloads.map((w, idx) => (
+              <WorkloadRow key={w.userId} w={w} index={idx + 1} />
             ))}
           </div>
         )}
       </Card>
 
       {/* Heatmap */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Peta Haba Beban Kerja"
           subtitle="4 minggu lepas + 2 minggu akan datang"
           icon={Activity}
+          index={2}
+          eyebrow="Peta Haba"
         />
         {heatLoading ? (
           <LoadingCard />
@@ -265,16 +271,18 @@ export function WorkloadView() {
       </Card>
 
       {/* Alerts & Recommendations */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Amaran & Cadangan"
           subtitle="Staf dengan beban tinggi / berlebihan memerlukan tindakan"
           icon={Lightbulb}
+          index={3}
+          eyebrow="Amaran"
         />
         {wlLoading ? (
           <div className="space-y-2">
             {[...Array(2)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-16 w-full rounded-md" />
             ))}
           </div>
         ) : sortedWorkloads.filter(
@@ -293,7 +301,7 @@ export function WorkloadView() {
   );
 }
 
-// ---------- Week segmented control (local, styled like PeriodSelector) ----------
+// ---------- Week segmented control (Swiss sharp hairline segments) ----------
 function WeekSegmentedControl({
   value,
   onChange,
@@ -302,16 +310,17 @@ function WeekSegmentedControl({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-muted/60 border border-border">
-      {WEEK_OPTIONS.map((opt) => (
+    <div className="inline-flex items-stretch rounded-sm border border-border overflow-hidden bg-card">
+      {WEEK_OPTIONS.map((opt, i) => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "px-2.5 py-1 rounded text-xs font-medium transition-colors",
+            "px-2.5 py-1 text-xs font-medium transition-colors tabular-nums",
+            i > 0 && "border-l border-border",
             value === opt.value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-background text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
           )}
         >
           {opt.label}
@@ -321,16 +330,19 @@ function WeekSegmentedControl({
   );
 }
 
-// ---------- Workload row ----------
-function WorkloadRow({ w }: { w: WorkloadInfo }) {
+// ---------- Workload row (staff capacity card) ----------
+function WorkloadRow({ w, index }: { w: WorkloadInfo; index: number }) {
   const barColor = STATUS_BAR_COLOR[w.status];
   const widthPct = Math.min(100, Math.max(0, w.utilisation));
   return (
-    <div className="p-3 rounded-md border border-border hover:bg-muted/30 transition-colors">
-      <div className="flex items-center gap-3">
-        <Avatar className="w-9 h-9 shrink-0">
+    <div className="p-3 rounded-md border border-border card-flat hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3">
+        <span className="index-numeral text-[11px] leading-none select-none mt-1 hidden sm:inline">
+          {String(index).padStart(2, "0")}
+        </span>
+        <Avatar className="w-9 h-9 shrink-0 rounded-sm">
           <AvatarFallback
-            className="text-white text-[10px] font-semibold"
+            className="text-white text-[10px] font-semibold rounded-sm"
             style={{ backgroundColor: "#1F3A5F" }}
           >
             {initials(w.userName)}
@@ -338,34 +350,40 @@ function WorkloadRow({ w }: { w: WorkloadInfo }) {
         </Avatar>
 
         <div className="flex-1 min-w-0">
+          {/* Name + status badge */}
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">{w.userName}</div>
-              <div className="text-[11px] text-muted-foreground truncate">
+              <div className="text-[11px] text-muted-foreground truncate tabular-nums">
                 {w.activeTasks} tugasan aktif
               </div>
             </div>
             <StatusBadge status={w.status} type="workload" />
           </div>
 
-          {/* Bar */}
-          <div className="mt-2.5 relative h-5 rounded bg-muted/50 overflow-hidden">
+          {/* Large utilisation % + hours summary */}
+          <div className="flex items-baseline justify-between gap-2 mt-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-semibold tabular-nums num-display leading-none">
+                {w.utilisation}%
+              </span>
+              <span className="text-[10px] text-muted-foreground">utilisasi</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              {w.activeTaskHours}h / {w.availableHoursWeek}h
+            </span>
+          </div>
+
+          {/* Sharp horizontal bar with 100% reference line */}
+          <div className="mt-2 relative h-1.5 rounded-none bg-muted overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${widthPct}%` }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className={cn("h-full rounded", barColor)}
+              className={cn("h-full rounded-none", barColor)}
             />
-            <div className="absolute inset-0 flex items-center justify-between px-2 text-[10px] font-medium">
-              <span className="text-foreground/85 tabular-nums">
-                {w.utilisation}%
-              </span>
-              <span className="text-muted-foreground tabular-nums">
-                {w.activeTaskHours}h / {w.availableHoursWeek}h
-              </span>
-            </div>
-            {/* 100% marker line */}
-            <div className="absolute inset-y-0 left-[100%] w-px bg-border/60 -translate-x-px" />
+            {/* 100% reference line */}
+            <div className="absolute inset-y-0 left-[100%] w-px bg-border-strong -translate-x-px" />
           </div>
         </div>
       </div>
@@ -381,7 +399,7 @@ function HeatmapMatrix({ heatmap }: { heatmap: HeatmapPayload }) {
       <div className="overflow-x-auto scroll-slim -mx-1 px-1">
         <div className="min-w-[36rem]">
           {/* Header row: empty corner + week labels */}
-          <div className="flex items-stretch gap-1 mb-1.5">
+          <div className="flex items-stretch gap-px mb-1.5">
             <div className="w-28 lg:w-36 shrink-0" />
             {weeks.map((wk, i) => {
               const isCurrent = wk.offset === 0;
@@ -394,7 +412,7 @@ function HeatmapMatrix({ heatmap }: { heatmap: HeatmapPayload }) {
                 >
                   <div
                     className={cn(
-                      "text-[10px] font-medium leading-tight",
+                      "text-[10px] font-medium leading-tight eyebrow",
                       isCurrent
                         ? "text-accent"
                         : isFuture
@@ -414,11 +432,11 @@ function HeatmapMatrix({ heatmap }: { heatmap: HeatmapPayload }) {
             })}
           </div>
 
-          {/* Rows */}
-          <div className="space-y-1">
+          {/* Rows — gap-px + bg-border/40 produces hairlines between cells */}
+          <div className="bg-border/40 space-y-px">
             {matrix.map((row) => (
-              <div key={row.staff.id} className="flex items-stretch gap-1">
-                <div className="w-28 lg:w-36 shrink-0 min-w-0 pr-1 flex items-center">
+              <div key={row.staff.id} className="flex items-stretch gap-px">
+                <div className="w-28 lg:w-36 shrink-0 min-w-0 pr-2 flex items-center bg-card">
                   <div className="min-w-0">
                     <div className="text-xs font-medium truncate">
                       {row.staff.name}
@@ -437,13 +455,16 @@ function HeatmapMatrix({ heatmap }: { heatmap: HeatmapPayload }) {
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend — sharp squares with hairline borders */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 mt-2 border-t border-border text-[10px] text-muted-foreground">
-        <span className="font-medium uppercase tracking-wide">Legenda:</span>
+        <span className="eyebrow">Legenda</span>
         {(Object.keys(STATUS_CELL_BG) as WorkloadStatus[]).map((s) => (
           <span key={s} className="inline-flex items-center gap-1.5">
             <span
-              className={cn("w-3 h-3 rounded", STATUS_CELL_BG[s])}
+              className={cn(
+                "w-2.5 h-2.5 rounded-sm border border-border",
+                STATUS_CELL_BG[s]
+              )}
             />
             <span>{s}</span>
           </span>
@@ -464,10 +485,10 @@ function HeatmapCellBox({
   return (
     <div
       className={cn(
-        "flex-1 min-w-0 h-9 rounded flex items-center justify-center text-[10px] font-semibold tabular-nums border",
+        "flex-1 min-w-0 h-9 rounded-none flex items-center justify-center text-[10px] font-semibold tabular-nums",
         STATUS_CELL_BG[cell.status],
         STATUS_CELL_TEXT[cell.status],
-        isCurrent ? "border-accent/60 ring-1 ring-accent/30" : "border-transparent"
+        isCurrent && "ring-1 ring-inset ring-accent"
       )}
       title={`${week?.label || ""} · ${cell.status} · ${cell.utilisation}%`}
     >
@@ -492,7 +513,7 @@ function AlertsList({ workloads }: { workloads: WorkloadInfo[] }) {
           <div
             key={w.userId}
             className={cn(
-              "flex items-start gap-3 p-3 rounded-md border",
+              "flex items-start gap-3 p-3 rounded-md border card-flat",
               isDanger
                 ? "border-status-danger/30 bg-status-danger/5"
                 : "border-status-warning/30 bg-status-warning/5"
@@ -500,10 +521,10 @@ function AlertsList({ workloads }: { workloads: WorkloadInfo[] }) {
           >
             <div
               className={cn(
-                "w-8 h-8 rounded-md flex items-center justify-center shrink-0",
+                "w-8 h-8 rounded-sm flex items-center justify-center shrink-0 border",
                 isDanger
-                  ? "bg-status-danger/15 text-status-danger"
-                  : "bg-status-warning/15 text-status-warning"
+                  ? "bg-status-danger/10 text-status-danger border-status-danger/30"
+                  : "bg-status-warning/10 text-status-warning border-status-warning/30"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -524,7 +545,7 @@ function AlertsList({ workloads }: { workloads: WorkloadInfo[] }) {
                   {w.utilisation}% utilisasi
                 </span>
               </div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">
+              <div className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
                 {w.activeTaskHours}h tugasan aktif / {w.availableHoursWeek}h kapasiti ·{" "}
                 {w.activeTasks} tugasan · {rec.hint}
               </div>

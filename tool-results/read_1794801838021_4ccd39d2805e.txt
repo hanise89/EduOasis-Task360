@@ -1,0 +1,1262 @@
+     1→"use client";
+     2→
+     3→import { useMemo, useState } from "react";
+     4→import { useQuery } from "@tanstack/react-query";
+     5→import { motion, AnimatePresence } from "framer-motion";
+     6→import { toast } from "sonner";
+     7→
+     8→import { apiGet } from "@/lib/api";
+     9→import { useAppStore } from "@/lib/store";
+    10→import { cn } from "@/lib/utils";
+    11→import { initials, formatDate, GRADE_META } from "@/lib/meta";
+    12→import type { StaffScore, DimensionScore, PeriodKey } from "@/types";
+    13→
+    14→import { PeriodSelector } from "@/components/common/period-selector";
+    15→import { ScoreRing } from "@/components/common/score-ring";
+    16→import {
+    17→  SectionHeader,
+    18→  LoadingCard,
+    19→  EmptyState,
+    20→  PageContainer,
+    21→  StatusBadge,
+    22→} from "@/components/common/ui";
+    23→import { Card } from "@/components/ui/card";
+    24→import { Button } from "@/components/ui/button";
+    25→import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+    26→import { Skeleton } from "@/components/ui/skeleton";
+    27→import { Label } from "@/components/ui/label";
+    28→import { Textarea } from "@/components/ui/textarea";
+    29→import {
+    30→  Select,
+    31→  SelectContent,
+    32→  SelectItem,
+    33→  SelectTrigger,
+    34→  SelectValue,
+    35→} from "@/components/ui/select";
+    36→import {
+    37→  Tabs,
+    38→  TabsList,
+    39→  TabsTrigger,
+    40→  TabsContent,
+    41→} from "@/components/ui/tabs";
+    42→import {
+    43→  Table,
+    44→  TableHeader,
+    45→  TableBody,
+    46→  TableHead,
+    47→  TableRow,
+    48→  TableCell,
+    49→} from "@/components/ui/table";
+    50→import {
+    51→  FileText,
+    52→  FileDown,
+    53→  Users,
+    54→  CheckCircle2,
+    55→  AlertTriangle,
+    56→  TrendingUp,
+    57→  TrendingDown,
+    58→  Minus,
+    59→  Gauge,
+    60→  ChevronDown,
+    61→  ChevronRight,
+    62→  Star,
+    63→  Award,
+    64→  ClipboardList,
+    65→  ListChecks,
+    66→  Printer,
+    67→} from "lucide-react";
+    68→
+    69→// ============================================================
+    70→// Types
+    71→// ============================================================
+    72→
+    73→interface ReportTask {
+    74→  id: string;
+    75→  title: string;
+    76→  category: string;
+    77→  priority: string;
+    78→  status: string;
+    79→  dueDate: string;
+    80→  completedAt: string | null;
+    81→  estimatedHours: number;
+    82→  reworkCount: number;
+    83→  rating: number | null;
+    84→}
+    85→
+    86→interface ReportInitiative {
+    87→  id: string;
+    88→  title: string;
+    89→  impactLevel: string;
+    90→  points: number;
+    91→  verifiedAt: string | null;
+    92→}
+    93→
+    94→interface ReportAccRating {
+    95→  period: string;
+    96→  rating: number;
+    97→  comment: string;
+    98→}
+    99→
+   100→interface IndividualReport {
+   101→  score: StaffScore;
+   102→  tasks: ReportTask[];
+   103→  initiatives: ReportInitiative[];
+   104→  accountabilityRatings: ReportAccRating[];
+   105→}
+   106→
+   107→interface TeamStaff {
+   108→  id: string;
+   109→  name: string;
+   110→  position: string;
+   111→  avatarColor: string;
+   112→  tasks: { userId: string; completed: number; overdue: number; active: number; total: number };
+   113→}
+   114→
+   115→interface TeamReport {
+   116→  scores: StaffScore[];
+   117→  staff: TeamStaff[];
+   118→}
+   119→
+   120→interface UserLite {
+   121→  id: string;
+   122→  name: string;
+   123→  position: string;
+   124→  avatarColor: string;
+   125→  role: string;
+   126→}
+   127→
+   128→const IMPACT_META: Record<string, { label: string; text: string; bg: string }> = {
+   129→  "Kecil": { label: "Kecil", text: "text-muted-foreground", bg: "bg-muted" },
+   130→  "Sederhana": { label: "Sederhana", text: "text-status-warning", bg: "bg-status-warning/15" },
+   131→  "Besar": { label: "Besar", text: "text-status-success", bg: "bg-status-success/10" },
+   132→};
+   133→
+   134→const PERIOD_LABELS: Record<PeriodKey, string> = {
+   135→  week: "Minggu Ini",
+   136→  month: "Bulan Ini",
+   137→  quarter: "Suku Tahun",
+   138→  all: "Sepanjang Tahun",
+   139→};
+   140→
+   141→// ============================================================
+   142→// Export helpers (client-side, no deps)
+   143→// ============================================================
+   144→
+   145→function exportToCSV(filename: string, rows: string[][]) {
+   146→  const csv = rows
+   147→    .map((row) =>
+   148→      row
+   149→        .map((cell) => {
+   150→          const s = String(cell ?? "");
+   151→          if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+   152→            return `"${s.replace(/"/g, '""')}"`;
+   153→          }
+   154→          return s;
+   155→        })
+   156→        .join(",")
+   157→    )
+   158→    .join("\n");
+   159→  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+   160→  const url = URL.createObjectURL(blob);
+   161→  const a = document.createElement("a");
+   162→  a.href = url;
+   163→  a.download = filename;
+   164→  document.body.appendChild(a);
+   165→  a.click();
+   166→  document.body.removeChild(a);
+   167→  URL.revokeObjectURL(url);
+   168→}
+   169→
+   170→function exportToPDF(title: string, htmlContent: string) {
+   171→  const win = window.open("", "_blank", "width=1024,height=768");
+   172→  if (!win) {
+   173→    toast.error("Sila benarkan tetingkap pop-up untuk eksport PDF.");
+   174→    return;
+   175→  }
+   176→  const generatedAt = new Date().toLocaleString("ms-MY", {
+   177→    day: "2-digit",
+   178→    month: "short",
+   179→    year: "numeric",
+   180→    hour: "2-digit",
+   181→    minute: "2-digit",
+   182→  });
+   183→  const html = `<!DOCTYPE html><html lang="ms"><head><meta charset="utf-8"/>
+   184→<meta name="viewport" content="width=device-width, initial-scale=1"/>
+   185→<title>${escapeHtml(title)}</title>
+   186→<style>
+   187→  * { box-sizing: border-box; }
+   188→  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 28mm 18mm; color: #1a2332; background: #ffffff; font-size: 12px; line-height: 1.5; }
+   189→  h1 { color: #1F3A5F; font-size: 22px; margin: 0 0 2px 0; letter-spacing: -0.02em; }
+   190→  h2 { color: #1F3A5F; font-size: 14px; margin: 22px 0 8px 0; border-bottom: 2px solid #0E7C86; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+   191→  h3 { color: #1F3A5F; font-size: 12px; margin: 14px 0 6px 0; }
+   192→  .subtitle { color: #64748b; font-size: 11px; margin: 0 0 16px 0; }
+   193→  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px 0; font-size: 10.5px; }
+   194→  th { background: #1F3A5F; color: #ffffff; text-align: left; padding: 6px 8px; font-weight: 600; font-size: 10px; }
+   195→  td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+   196→  tr:nth-child(even) td { background: #f8fafc; }
+   197→  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1F3A5F; padding-bottom: 10px; margin-bottom: 14px; }
+   198→  .brand { font-size: 10px; color: #64748b; text-align: right; line-height: 1.4; }
+   199→  .brand strong { color: #1F3A5F; font-size: 11px; }
+   200→  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0 14px 0; }
+   201→  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin: 8px 0 14px 0; }
+   202→  .metric { padding: 8px 10px; background: #f1f5f9; border-left: 3px solid #0E7C86; border-radius: 0 4px 4px 0; }
+   203→  .metric-label { font-size: 8.5px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; margin-bottom: 2px; }
+   204→  .metric-value { font-size: 18px; font-weight: 700; color: #1F3A5F; }
+   205→  .metric-hint { font-size: 9px; color: #64748b; margin-top: 2px; }
+   206→  .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; background: #f1f5f9; color: #1F3A5F; }
+   207→  .badge.success { background: #dcfce7; color: #166534; }
+   208→  .badge.warning { background: #fef3c7; color: #92400e; }
+   209→  .badge.danger { background: #fee2e2; color: #991b1b; }
+   210→  .badge.neutral { background: #f1f5f9; color: #475569; }
+   211→  .badge.accent { background: #ccfbf1; color: #0E7C86; }
+   212→  .score { font-weight: 700; font-size: 13px; color: #1F3A5F; }
+   213→  .score.high { color: #166534; }
+   214→  .score.mid { color: #92400e; }
+   215→  .score.low { color: #991b1b; }
+   216→  .profile { display: flex; gap: 14px; align-items: center; padding: 12px; background: #f8fafc; border-radius: 6px; margin-bottom: 12px; }
+   217→  .avatar { width: 56px; height: 56px; border-radius: 50%; background: #1F3A5F; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+   218→  .profile-name { font-size: 16px; font-weight: 700; color: #1F3A5F; }
+   219→  .profile-pos { font-size: 11px; color: #64748b; margin-top: 2px; }
+   220→  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 14px 0; }
+   221→  .dim { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px; }
+   222→  .dim-name { font-size: 10px; font-weight: 600; color: #1F3A5F; margin-bottom: 4px; display: flex; justify-content: space-between; }
+   223→  .dim-score { font-weight: 700; }
+   224→  .dim-bar { background: #e2e8f0; height: 5px; border-radius: 3px; overflow: hidden; margin: 4px 0; }
+   225→  .dim-bar-fill { height: 100%; background: #0E7C86; }
+   226→  .dim-details { font-size: 9.5px; color: #475569; margin-top: 4px; }
+   227→  .dim-details div { display: flex; justify-content: space-between; padding: 1px 0; }
+   228→  .rating-stars { color: #EAB308; letter-spacing: 1px; }
+   229→  .footer { margin-top: 28px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 9.5px; color: #64748b; text-align: center; }
+   230→  .note-box { padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #0E7C86; border-radius: 0 4px 4px 0; font-size: 11px; white-space: pre-wrap; min-height: 40px; }
+   231→  @media print {
+   232→    body { margin: 12mm 10mm; }
+   233→    .no-print { display: none !important; }
+   234→  }
+   235→</style></head>
+   236→<body>
+   237→  <div class="header">
+   238→    <div>
+   239→      <h1>${escapeHtml(title)}</h1>
+   240→      <p class="subtitle">EDUOASIS TASK360 · Laporan Prestasi Staf</p>
+   241→    </div>
+   242→    <div class="brand"><strong>Al Amin Edu Oasis</strong><br/>Dijana: ${escapeHtml(generatedAt)}</div>
+   243→  </div>
+   244→  ${htmlContent}
+   245→  <div class="footer">Sulit — Kegunaan Dalaman · Prototaip v1.0</div>
+   246→  <script>
+   247→    window.onload = function() { setTimeout(function() { window.focus(); window.print(); }, 300); };
+   248→  </script>
+   249→</body></html>`;
+   250→  win.document.open();
+   251→  win.document.write(html);
+   252→  win.document.close();
+   253→}
+   254→
+   255→function escapeHtml(s: string): string {
+   256→  return String(s ?? "")
+   257→    .replace(/&/g, "&amp;")
+   258→    .replace(/</g, "&lt;")
+   259→    .replace(/>/g, "&gt;")
+   260→    .replace(/"/g, "&quot;")
+   261→    .replace(/'/g, "&#039;");
+   262→}
+   263→
+   264→function scoreColorClass(score: number): string {
+   265→  if (score >= 75) return "text-status-success";
+   266→  if (score >= 60) return "text-status-warning";
+   267→  return "text-status-danger";
+   268→}
+   269→
+   270→function scoreBarClass(score: number): string {
+   271→  if (score >= 75) return "bg-status-success";
+   272→  if (score >= 60) return "bg-status-warning";
+   273→  return "bg-status-danger";
+   274→}
+   275→
+   276→function trendMeta(trend: "up" | "down" | "flat") {
+   277→  if (trend === "up") return { Icon: TrendingUp, label: "Meningkat", cls: "text-status-success" };
+   278→  if (trend === "down") return { Icon: TrendingDown, label: "Menurun", cls: "text-status-danger" };
+   279→  return { Icon: Minus, label: "Stabil", cls: "text-muted-foreground" };
+   280→}
+   281→
+   282→function gradeBadgeClass(grade: string): string {
+   283→  const meta = GRADE_META[grade];
+   284→  return meta ? cn(meta.bg, meta.text) : "bg-muted text-muted-foreground";
+   285→}
+   286→
+   287→function pdfGradeClass(grade: string): string {
+   288→  if (grade === "A" || grade === "B") return "success";
+   289→  if (grade === "C") return "warning";
+   290→  return "danger";
+   291→}
+   292→
+   293→function pdfScoreClass(score: number): string {
+   294→  if (score >= 75) return "high";
+   295→  if (score >= 60) return "mid";
+   296→  return "low";
+   297→}
+   298→
+   299→function pdfImpactClass(level: string): string {
+   300→  if (level === "Besar") return "success";
+   301→  if (level === "Sederhana") return "warning";
+   302→  return "neutral";
+   303→}
+   304→
+   305→function stars(rating: number): string {
+   306→  return "★".repeat(Math.max(0, Math.min(5, Math.round(rating)))) +
+   307→    "☆".repeat(5 - Math.max(0, Math.min(5, Math.round(rating))));
+   308→}
+   309→
+   310→// ============================================================
+   311→// Main view
+   312→// ============================================================
+   313→
+   314→export function ReportsView() {
+   315→  const user = useAppStore((s) => s.user)!;
+   316→  const period = useAppStore((s) => s.period);
+   317→  const isGM = user.role === "GM";
+   318→  const [tab, setTab] = useState<"team" | "individual">("team");
+   319→
+   320→  if (!isGM) {
+   321→    // Staff: directly render individual report
+   322→    return (
+   323→      <PageContainer>
+   324→        <PageHeader
+   325→          title="Laporan Prestasi"
+   326→          subtitle="Laporan individu prestasi anda"
+   327→        />
+   328→        <IndividualReportSection
+   329→          key={`${user.id}-${period}`}
+   330→          userId={user.id}
+   331→          period={period}
+   332→        />
+   333→      </PageContainer>
+   334→    );
+   335→  }
+   336→
+   337→  return (
+   338→    <PageContainer>
+   339→      <PageHeader
+   340→        title="Laporan Prestasi"
+   341→        subtitle="Eksport & analisis prestasi pasukan serta individu"
+   342→      />
+   343→
+   344→      <Tabs value={tab} onValueChange={(v) => setTab(v as "team" | "individual")}>
+   345→        <TabsList>
+   346→          <TabsTrigger value="team" className="gap-1.5">
+   347→            <Users className="w-3.5 h-3.5" /> Laporan Pasukan
+   348→          </TabsTrigger>
+   349→          <TabsTrigger value="individual" className="gap-1.5">
+   350→            <FileText className="w-3.5 h-3.5" /> Laporan Individu
+   351→          </TabsTrigger>
+   352→        </TabsList>
+   353→
+   354→        <TabsContent value="team" className="mt-4">
+   355→          <TeamReportSection period={period} />
+   356→        </TabsContent>
+   357→        <TabsContent value="individual" className="mt-4">
+   358→          <IndividualReportSectionForGM period={period} />
+   359→        </TabsContent>
+   360→      </Tabs>
+   361→    </PageContainer>
+   362→  );
+   363→}
+   364→
+   365→// ============================================================
+   366→// Page header
+   367→// ============================================================
+   368→
+   369→function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
+   370→  return (
+   371→    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+   372→      <div>
+   373→        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+   374→          Eksport &amp; Pelaporan
+   375→        </span>
+   376→        <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">{title}</h1>
+   377→        <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+   378→      </div>
+   379→      <PeriodSelector />
+   380→    </div>
+   381→  );
+   382→}
+   383→
+   384→// ============================================================
+   385→// Team report (GM only)
+   386→// ============================================================
+   387→
+   388→function TeamReportSection({ period }: { period: PeriodKey }) {
+   389→  const { data, isLoading, isError } = useQuery({
+   390→    queryKey: ["reports", "team", period],
+   391→    queryFn: () => apiGet<TeamReport>(`/api/reports/team?period=${period}`),
+   392→  });
+   393→
+   394→  if (isLoading) {
+   395→    return (
+   396→      <div className="space-y-4">
+   397→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   398→          {[...Array(4)].map((_, i) => <LoadingCard key={i} />)}
+   399→        </div>
+   400→        <Card className="p-4 lg:p-5">
+   401→          <Skeleton className="h-6 w-48 mb-4" />
+   402→          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full mb-2" />)}
+   403→        </Card>
+   404→      </div>
+   405→    );
+   406→  }
+   407→
+   408→  if (isError) {
+   409→    return (
+   410→      <Card className="p-6">
+   411→        <EmptyState
+   412→          icon={AlertTriangle}
+   413→          title="Gagal memuatkan laporan pasukan"
+   414→          description="Sila cuba lagi. Pastikan anda log masuk sebagai GM."
+   415→        />
+   416→      </Card>
+   417→    );
+   418→  }
+   419→
+   420→  const scores = data?.scores || [];
+   421→  const staff = data?.staff || [];
+   422→
+   423→  if (scores.length === 0) {
+   424→    return (
+   425→      <Card className="p-6">
+   426→        <EmptyState
+   427→          icon={Users}
+   428→          title="Tiada staf ditemui"
+   429→          description="Belum ada staf yang didaftarkan untuk laporan pasukan."
+   430→        />
+   431→      </Card>
+   432→    );
+   433→  }
+   434→
+   435→  // KPIs
+   436→  const avgScore = Math.round(scores.reduce((s, x) => s + x.overall, 0) / scores.length);
+   437→  const totalStaff = staff.length;
+   438→  const totalCompleted = staff.reduce((s, x) => s + (x.tasks?.completed || 0), 0);
+   439→  const totalOverdue = staff.reduce((s, x) => s + (x.tasks?.overdue || 0), 0);
+   440→
+   441→  // Merge staff with score (preserve staff order; rank by score desc)
+   442→  const ranked = [...scores].sort((a, b) => b.overall - a.overall);
+   443→  const rankMap = new Map<string, number>();
+   444→  ranked.forEach((s, i) => rankMap.set(s.userId, i + 1));
+   445→
+   446→  const rows = staff.map((st) => {
+   447→    const sc = scores.find((s) => s.userId === st.id);
+   448→    return { staff: st, score: sc, rank: sc ? rankMap.get(st.id) || 0 : 0 };
+   449→  });
+   450→
+   451→  const handleExportCSV = () => {
+   452→    const rows: string[][] = [
+   453→      ["Kedudukan", "Nama", "Jawatan", "Skor Keseluruhan", "Gred", "Label Gred", "Tugasan Siap", "Tugasan Tertunggak", "Tugasan Aktif", "Jumlah Tugasan", "Trend"],
+   454→      ...staff.map((st) => {
+   455→        const sc = scores.find((s) => s.userId === st.id);
+   456→        const t = st.tasks || { completed: 0, overdue: 0, active: 0, total: 0 };
+   457→        const rank = sc ? rankMap.get(st.id) || "" : "";
+   458→        const trend = sc ? (sc.trend === "up" ? "Meningkat" : sc.trend === "down" ? "Menurun" : "Stabil") : "";
+   459→        return [
+   460→          String(rank),
+   461→          st.name,
+   462→          st.position,
+   463→          sc ? String(sc.overall) : "—",
+   464→          sc?.grade || "—",
+   465→          sc?.gradeLabel || "—",
+   466→          String(t.completed),
+   467→          String(t.overdue),
+   468→          String(t.active),
+   469→          String(t.total),
+   470→          trend,
+   471→        ];
+   472→      }),
+   473→    ];
+   474→    exportToCSV(`laporan-pasukan-${period}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+   475→    toast.success("CSV pasukan telah dimuat turun.");
+   476→  };
+   477→
+   478→  const handleExportPDF = () => {
+   479→    const kpisHtml = `
+   480→      <div class="grid-4">
+   481→        <div class="metric"><div class="metric-label">Purata Skor Pasukan</div><div class="metric-value">${avgScore}</div><div class="metric-hint">/ 100</div></div>
+   482→        <div class="metric"><div class="metric-label">Bilangan Staf</div><div class="metric-value">${totalStaff}</div></div>
+   483→        <div class="metric"><div class="metric-label">Tugasan Siap</div><div class="metric-value">${totalCompleted}</div></div>
+   484→        <div class="metric"><div class="metric-label">Tugasan Tertunggak</div><div class="metric-value">${totalOverdue}</div></div>
+   485→      </div>
+   486→    `;
+   487→    const tableHtml = `
+   488→      <h2>Kedudukan Prestasi Staf — ${escapeHtml(PERIOD_LABELS[period])}</h2>
+   489→      <table>
+   490→        <thead><tr>
+   491→          <th>#</th><th>Nama</th><th>Jawatan</th><th>Skor</th><th>Gred</th>
+   492→          <th>Siap</th><th>Tertunggak</th><th>Aktif</th><th>Jumlah</th><th>Trend</th>
+   493→        </tr></thead>
+   494→        <tbody>
+   495→          ${rows.map(({ staff: st, score: sc, rank }) => {
+   496→            const t = st.tasks || { completed: 0, overdue: 0, active: 0, total: 0 };
+   497→            const trend = sc ? trendMeta(sc.trend) : null;
+   498→            return `<tr>
+   499→              <td>${rank || "—"}</td>
+   500→              <td>${escapeHtml(st.name)}</td>
+   501→              <td>${escapeHtml(st.position)}</td>
+   502→              <td class="score ${sc ? pdfScoreClass(sc.overall) : ""}">${sc ? sc.overall : "—"}</td>
+   503→              <td><span class="badge ${sc ? pdfGradeClass(sc.grade) : "neutral"}">${sc ? sc.grade + " — " + sc.gradeLabel : "—"}</span></td>
+   504→              <td>${t.completed}</td>
+   505→              <td>${t.overdue}</td>
+   506→              <td>${t.active}</td>
+   507→              <td>${t.total}</td>
+   508→              <td>${trend ? trend.label : "—"}</td>
+   509→            </tr>`;
+   510→          }).join("")}
+   511→        </tbody>
+   512→      </table>
+   513→    `;
+   514→    exportToPDF(`Laporan Prestasi Pasukan — ${PERIOD_LABELS[period]}`, kpisHtml + tableHtml);
+   515→    toast.success("PDF pasukan sedang dijana.");
+   516→  };
+   517→
+   518→  return (
+   519→    <div className="space-y-4">
+   520→      {/* KPI summary */}
+   521→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   522→        <KpiTile
+   523→          label="Purata Skor Pasukan"
+   524→          value={avgScore}
+   525→          hint="/ 100"
+   526→          icon={Gauge}
+   527→          accent="primary"
+   528→        />
+   529→        <KpiTile
+   530→          label="Bilangan Staf"
+   531→          value={totalStaff}
+   532→          hint="Staf aktif"
+   533→          icon={Users}
+   534→          accent="accent"
+   535→        />
+   536→        <KpiTile
+   537→          label="Tugasan Siap"
+   538→          value={totalCompleted}
+   539→          hint="Jumlah pasukan"
+   540→          icon={CheckCircle2}
+   541→          accent="success"
+   542→        />
+   543→        <KpiTile
+   544→          label="Tugasan Tertunggak"
+   545→          value={totalOverdue}
+   546→          hint="Jumlah pasukan"
+   547→          icon={AlertTriangle}
+   548→          accent={totalOverdue > 0 ? "danger" : "neutral"}
+   549→        />
+   550→      </div>
+   551→
+   552→      {/* Team table + export */}
+   553→      <Card className="p-4 lg:p-5">
+   554→        <SectionHeader
+   555→          title="Jadual Prestasi Staf"
+   556→          subtitle={`Tempoh: ${PERIOD_LABELS[period]}`}
+   557→          icon={ListChecks}
+   558→          action={
+   559→            <div className="flex items-center gap-2">
+   560→              <Button size="sm" variant="outline" onClick={handleExportCSV}>
+   561→                <FileDown className="w-3.5 h-3.5 mr-1.5" /> Eksport CSV
+   562→              </Button>
+   563→              <Button size="sm" onClick={handleExportPDF}>
+   564→                <Printer className="w-3.5 h-3.5 mr-1.5" /> Eksport PDF
+   565→              </Button>
+   566→            </div>
+   567→          }
+   568→        />
+   569→        <div className="max-h-[560px] overflow-y-auto scroll-slim rounded-md border border-border">
+   570→          <Table>
+   571→            <TableHeader className="sticky top-0 bg-card z-10">
+   572→              <TableRow>
+   573→                <TableHead className="w-10 text-center">#</TableHead>
+   574→                <TableHead>Nama</TableHead>
+   575→                <TableHead className="hidden md:table-cell">Jawatan</TableHead>
+   576→                <TableHead className="text-center">Skor</TableHead>
+   577→                <TableHead>Gred</TableHead>
+   578→                <TableHead className="text-center hidden sm:table-cell">Siap</TableHead>
+   579→                <TableHead className="text-center hidden sm:table-cell">Tertunggak</TableHead>
+   580→                <TableHead className="text-center hidden md:table-cell">Aktif</TableHead>
+   581→                <TableHead className="text-center">Trend</TableHead>
+   582→              </TableRow>
+   583→            </TableHeader>
+   584→            <TableBody>
+   585→              {rows.map(({ staff: st, score: sc, rank }) => {
+   586→                const t = st.tasks || { completed: 0, overdue: 0, active: 0, total: 0 };
+   587→                const trend = sc ? trendMeta(sc.trend) : null;
+   588→                return (
+   589→                  <TableRow key={st.id}>
+   590→                    <TableCell className="text-center">
+   591→                      <span className={cn(
+   592→                        "inline-flex w-6 h-6 items-center justify-center rounded text-[11px] font-bold",
+   593→                        rank === 1 ? "bg-status-warning/20 text-status-warning" :
+   594→                        rank === 2 ? "bg-muted-foreground/20 text-foreground" :
+   595→                        rank === 3 ? "bg-status-danger/15 text-status-danger" :
+   596→                        "bg-muted text-muted-foreground"
+   597→                      )}>
+   598→                        {rank || "—"}
+   599→                      </span>
+   600→                    </TableCell>
+   601→                    <TableCell>
+   602→                      <div className="flex items-center gap-2 min-w-0">
+   603→                        <Avatar className="w-7 h-7">
+   604→                          <AvatarFallback style={{ backgroundColor: st.avatarColor, color: "#fff" }} className="text-[10px] font-semibold">
+   605→                            {initials(st.name)}
+   606→                          </AvatarFallback>
+   607→                        </Avatar>
+   608→                        <span className="font-medium text-sm truncate">{st.name}</span>
+   609→                      </div>
+   610→                    </TableCell>
+   611→                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{st.position}</TableCell>
+   612→                    <TableCell className="text-center">
+   613→                      {sc ? (
+   614→                        <span className={cn("text-base font-bold tabular-nums", scoreColorClass(sc.overall))}>{sc.overall}</span>
+   615→                      ) : <span className="text-muted-foreground">—</span>}
+   616→                    </TableCell>
+   617→                    <TableCell>
+   618→                      {sc && (
+   619→                        <span className={cn("inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium", gradeBadgeClass(sc.grade))}>
+   620→                          {sc.grade} · {sc.gradeLabel}
+   621→                        </span>
+   622→                      )}
+   623→                    </TableCell>
+   624→                    <TableCell className="text-center hidden sm:table-cell">
+   625→                      <span className="text-sm tabular-nums text-status-success font-medium">{t.completed}</span>
+   626→                    </TableCell>
+   627→                    <TableCell className="text-center hidden sm:table-cell">
+   628→                      <span className={cn("text-sm tabular-nums font-medium", t.overdue > 0 ? "text-status-danger" : "text-muted-foreground")}>
+   629→                        {t.overdue}
+   630→                      </span>
+   631→                    </TableCell>
+   632→                    <TableCell className="text-center hidden md:table-cell">
+   633→                      <span className="text-sm tabular-nums text-muted-foreground">{t.active}</span>
+   634→                    </TableCell>
+   635→                    <TableCell className="text-center">
+   636→                      {trend && (
+   637→                        <span className={cn("inline-flex items-center justify-center gap-0.5 text-xs", trend.cls)}>
+   638→                          <trend.Icon className="w-3.5 h-3.5" />
+   639→                        </span>
+   640→                      )}
+   641→                    </TableCell>
+   642→                  </TableRow>
+   643→                );
+   644→              })}
+   645→            </TableBody>
+   646→          </Table>
+   647→        </div>
+   648→      </Card>
+   649→    </div>
+   650→  );
+   651→}
+   652→
+   653→function KpiTile({
+   654→  label,
+   655→  value,
+   656→  hint,
+   657→  icon: Icon,
+   658→  accent,
+   659→}: {
+   660→  label: string;
+   661→  value: string | number;
+   662→  hint?: string;
+   663→  icon: React.ComponentType<{ className?: string }>;
+   664→  accent: "primary" | "accent" | "success" | "warning" | "danger" | "neutral";
+   665→}) {
+   666→  const accentMap: Record<string, { bg: string; text: string; bar: string }> = {
+   667→    primary: { bg: "bg-primary/10", text: "text-primary", bar: "bg-primary" },
+   668→    accent: { bg: "bg-accent/10", text: "text-accent", bar: "bg-accent" },
+   669→    success: { bg: "bg-status-success/10", text: "text-status-success", bar: "bg-status-success" },
+   670→    warning: { bg: "bg-status-warning/15", text: "text-status-warning", bar: "bg-status-warning" },
+   671→    danger: { bg: "bg-status-danger/10", text: "text-status-danger", bar: "bg-status-danger" },
+   672→    neutral: { bg: "bg-muted", text: "text-muted-foreground", bar: "bg-muted-foreground" },
+   673→  };
+   674→  const a = accentMap[accent];
+   675→  return (
+   676→    <Card className="p-4 card-flat relative overflow-hidden">
+   677→      <div className="flex items-start justify-between gap-2">
+   678→        <div className="min-w-0">
+   679→          <div className="text-[10px] lg:text-[11px] font-medium uppercase tracking-wide text-muted-foreground truncate">{label}</div>
+   680→          <motion.div
+   681→            initial={{ opacity: 0, y: 6 }}
+   682→            animate={{ opacity: 1, y: 0 }}
+   683→            transition={{ duration: 0.35 }}
+   684→            className="text-2xl lg:text-3xl font-semibold tracking-tight mt-1.5 tabular-nums"
+   685→          >
+   686→            {value}
+   687→          </motion.div>
+   688→          {hint && <div className="text-[11px] text-muted-foreground mt-1">{hint}</div>}
+   689→        </div>
+   690→        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", a.bg, a.text)}>
+   691→          <Icon className="w-4 h-4" />
+   692→        </div>
+   693→      </div>
+   694→      <div className={cn("absolute inset-x-0 top-0 h-0.5", a.bar)} />
+   695→    </Card>
+   696→  );
+   697→}
+   698→
+   699→// ============================================================
+   700→// Individual report (GM picks staff)
+   701→// ============================================================
+   702→
+   703→function IndividualReportSectionForGM({ period }: { period: PeriodKey }) {
+   704→  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+   705→
+   706→  const { data: usersData, isLoading: usersLoading } = useQuery({
+   707→    queryKey: ["users"],
+   708→    queryFn: () => apiGet<{ users: UserLite[] }>("/api/users"),
+   709→  });
+   710→
+   711→  const users = useMemo(() => {
+   712→    const all = usersData?.users || [];
+   713→    return all.filter((u) => u.role === "STAF");
+   714→  }, [usersData]);
+   715→
+   716→  // Derive the effective staff id; no effect needed.
+   717→  const effectiveStaffId = selectedStaffId || users[0]?.id || "";
+   718→
+   719→  if (usersLoading) {
+   720→    return (
+   721→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   722→        <LoadingCard className="lg:col-span-1" />
+   723→        <LoadingCard className="lg:col-span-2" />
+   724→      </div>
+   725→    );
+   726→  }
+   727→
+   728→  if (users.length === 0) {
+   729→    return (
+   730→      <Card className="p-6">
+   731→        <EmptyState
+   732→          icon={Users}
+   733→          title="Tiada staf ditemui"
+   734→          description="Daftarkan staf terlebih dahulu untuk menjana laporan individu."
+   735→        />
+   736→      </Card>
+   737→    );
+   738→  }
+   739→
+   740→  return (
+   741→    <div className="space-y-4">
+   742→      <Card className="p-3 lg:p-4">
+   743→        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+   744→          <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground shrink-0">
+   745→            Pilih Staf
+   746→          </Label>
+   747→          <Select value={effectiveStaffId} onValueChange={setSelectedStaffId}>
+   748→            <SelectTrigger className="w-full sm:w-80">
+   749→              <SelectValue placeholder="Pilih staf…" />
+   750→            </SelectTrigger>
+   751→            <SelectContent>
+   752→              {users.map((u) => (
+   753→                <SelectItem key={u.id} value={u.id}>
+   754→                  {u.name} — {u.position}
+   755→                </SelectItem>
+   756→              ))}
+   757→            </SelectContent>
+   758→          </Select>
+   759→        </div>
+   760→      </Card>
+   761→
+   762→      {effectiveStaffId && (
+   763→        <IndividualReportSection
+   764→          key={`${effectiveStaffId}-${period}`}
+   765→          userId={effectiveStaffId}
+   766→          period={period}
+   767→        />
+   768→      )}
+   769→    </div>
+   770→  );
+   771→}
+   772→
+   773→// ============================================================
+   774→// Individual report (renders for staff self OR GM-selected)
+   775→// ============================================================
+   776→
+   777→function IndividualReportSection({ userId, period }: { userId: string; period: PeriodKey }) {
+   778→  const { data, isLoading, isError } = useQuery({
+   779→    queryKey: ["reports", "individual", userId, period],
+   780→    queryFn: () => apiGet<IndividualReport>(`/api/reports/individual?userId=${userId}&period=${period}`),
+   781→  });
+   782→  const [drilldown, setDrilldown] = useState<string | null>(null);
+   783→  const [gmNote, setGmNote] = useState<string>("");
+   784→  const user = useAppStore((s) => s.user)!;
+   785→  const isGM = user.role === "GM";
+   786→
+   787→  // Note: parent passes key={`${userId}-${period}`} so local state (drilldown, gmNote)
+   788→  // resets naturally on staff/period change without an effect.
+   789→
+   790→  if (isLoading) {
+   791→    return (
+   792→      <div className="space-y-4">
+   793→        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   794→          <LoadingCard className="lg:col-span-1" />
+   795→          <LoadingCard className="lg:col-span-2" />
+   796→        </div>
+   797→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+   798→          {[...Array(6)].map((_, i) => <LoadingCard key={i} />)}
+   799→        </div>
+   800→      </div>
+   801→    );
+   802→  }
+   803→
+   804→  if (isError || !data?.score) {
+   805→    return (
+   806→      <Card className="p-6">
+   807→        <EmptyState
+   808→          icon={AlertTriangle}
+   809→          title="Laporan tidak tersedia"
+   810→          description="Tidak dapat memuatkan laporan individu. Sila cuba lagi."
+   811→        />
+   812→      </Card>
+   813→    );
+   814→  }
+   815→
+   816→  const { score, tasks, initiatives, accountabilityRatings } = data;
+   817→  const scoreUserInfo = isGM
+   818→    ? { name: score.userName, position: usersPositionHint(data) }
+   819→    : { name: user.name, position: user.position };
+   820→  const trend = trendMeta(score.trend);
+   821→
+   822→  // CSV exports ----------------------------------------------------
+   823→  const handleExportTasksCSV = () => {
+   824→    const rows: string[][] = [
+   825→      ["Tajuk", "Kategori", "Status", "Keutamaan", "Tarikh Akhir", "Tarikh Siap", "Anggaran Jam", "Semakan Semula", "Rating"],
+   826→      ...tasks.map((t) => [
+   827→        t.title,
+   828→        t.category,
+   829→        t.status,
+   830→        t.priority,
+   831→        formatDate(t.dueDate),
+   832→        t.completedAt ? formatDate(t.completedAt) : "—",
+   833→        String(t.estimatedHours),
+   834→        String(t.reworkCount),
+   835→        t.rating !== null ? t.rating.toFixed(2) : "—",
+   836→      ]),
+   837→    ];
+   838→    exportToCSV(`laporan-tugasan-${score.userName}-${period}.csv`, rows);
+   839→    toast.success("CSV tugasan telah dimuat turun.");
+   840→  };
+   841→
+   842→  // PDF export -----------------------------------------------------
+   843→  const handleExportPDF = () => {
+   844→    const profileHtml = `
+   845→      <div class="profile">
+   846→        <div class="avatar">${escapeHtml(initials(score.userName))}</div>
+   847→        <div>
+   848→          <div class="profile-name">${escapeHtml(score.userName)}</div>
+   849→          <div class="profile-pos">${escapeHtml(scoreUserInfo.position)} · Tempoh: ${escapeHtml(PERIOD_LABELS[period])} (${escapeHtml(score.period?.label || "")})</div>
+   850→        </div>
+   851→        <div style="margin-left:auto;text-align:center;">
+   852→          <div style="font-size:24px;font-weight:700;color:${pdfScoreHex(score.overall)};">${score.overall}</div>
+   853→          <div style="font-size:10px;color:#64748b;">Skor Keseluruhan</div>
+   854→          <div class="badge ${pdfGradeClass(score.grade)}" style="margin-top:4px;">${score.grade} — ${escapeHtml(score.gradeLabel)}</div>
+   855→        </div>
+   856→      </div>
+   857→    `;
+   858→
+   859→    const dimsHtml = `
+   860→      <h2>Profil 6 Dimensi</h2>
+   861→      <div class="dims">
+   862→        ${score.dimensions.map((d) => `
+   863→          <div class="dim">
+   864→            <div class="dim-name">
+   865→              <span>${escapeHtml(d.name)}</span>
+   866→              <span class="dim-score">${d.score}</span>
+   867→            </div>
+   868→            <div class="dim-bar"><div class="dim-bar-fill" style="width:${Math.max(0, Math.min(100, d.score))}%;"></div></div>
+   869→            <div class="dim-details">
+   870→              <div><span>Pemberat</span><span>${d.weight}%</span></div>
+   871→              ${d.details.map((det) => `<div><span>${escapeHtml(det.label)}</span><span>${escapeHtml(det.value)}</span></div>`).join("")}
+   872→            </div>
+   873→          </div>
+   874→        `).join("")}
+   875→      </div>
+   876→    `;
+   877→
+   878→    const tasksHtml = tasks.length === 0 ? "" : `
+   879→      <h2>Senarai Tugasan (${tasks.length})</h2>
+   880→      <table>
+   881→        <thead><tr>
+   882→          <th>Tajuk</th><th>Kategori</th><th>Status</th><th>Keutamaan</th>
+   883→          <th>Tarikh Akhir</th><th>Siap Pada</th><th>Rating</th><th>Semakan Semula</th>
+   884→        </tr></thead>
+   885→        <tbody>
+   886→          ${tasks.map((t) => `<tr>
+   887→            <td>${escapeHtml(t.title)}</td>
+   888→            <td>${escapeHtml(t.category)}</td>
+   889→            <td>${escapeHtml(t.status)}</td>
+   890→            <td>${escapeHtml(t.priority)}</td>
+   891→            <td>${escapeHtml(formatDate(t.dueDate))}</td>
+   892→            <td>${t.completedAt ? escapeHtml(formatDate(t.completedAt)) : "—"}</td>
+   893→            <td>${t.rating !== null ? t.rating.toFixed(2) : "—"}</td>
+   894→            <td>${t.reworkCount}</td>
+   895→          </tr>`).join("")}
+   896→        </tbody>
+   897→      </table>
+   898→    `;
+   899→
+   900→    const initHtml = initiatives.length === 0 ? "" : `
+   901→      <h2>Inisiatif Disahkan (${initiatives.length})</h2>
+   902→      <table>
+   903→        <thead><tr><th>Tajuk</th><th>Impak</th><th>Mata</th><th>Disahkan Pada</th></tr></thead>
+   904→        <tbody>
+   905→          ${initiatives.map((i) => `<tr>
+   906→            <td>${escapeHtml(i.title)}</td>
+   907→            <td><span class="badge ${pdfImpactClass(i.impactLevel)}">${escapeHtml(i.impactLevel)}</span></td>
+   908→            <td>${i.points}</td>
+   909→            <td>${i.verifiedAt ? escapeHtml(formatDate(i.verifiedAt)) : "—"}</td>
+   910→          </tr>`).join("")}
+   911→        </tbody>
+   912→      </table>
+   913→    `;
+   914→
+   915→    const accHtml = accountabilityRatings.length === 0 ? "" : `
+   916→      <h2>Rating Akauntabiliti</h2>
+   917→      <table>
+   918→        <thead><tr><th>Tempoh</th><th>Rating</th><th>Komen</th></tr></thead>
+   919→        <tbody>
+   920→          ${accountabilityRatings.map((a) => `<tr>
+   921→            <td>${escapeHtml(a.period)}</td>
+   922→            <td><span class="rating-stars">${stars(a.rating)}</span> (${a.rating}/5)</td>
+   923→            <td>${escapeHtml(a.comment || "—")}</td>
+   924→          </tr>`).join("")}
+   925→        </tbody>
+   926→      </table>
+   927→    `;
+   928→
+   929→    const noteHtml = (isGM && gmNote.trim()) ? `
+   930→      <h2>Catatan GM / Pelan Tindakan</h2>
+   931→      <div class="note-box">${escapeHtml(gmNote.trim())}</div>
+   932→    ` : "";
+   933→
+   934→    exportToPDF(
+   935→      `Laporan Individu — ${score.userName} (${PERIOD_LABELS[period]})`,
+   936→      profileHtml + dimsHtml + tasksHtml + initHtml + accHtml + noteHtml,
+   937→    );
+   938→    toast.success("PDF individu sedang dijana.");
+   939→  };
+   940→
+   941→  return (
+   942→    <div className="space-y-4">
+   943→      {/* Header card */}
+   944→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   945→        <Card className="p-4 lg:p-5 flex flex-col items-center justify-center text-center">
+   946→          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-3">Skor Keseluruhan</div>
+   947→          <ScoreRing score={score.overall} grade={score.grade} showGrade size={140} thickness={12} />
+   948→          <div className={cn("mt-3 px-4 py-1.5 rounded-full text-sm font-medium", gradeBadgeClass(score.grade))}>
+   949→            {score.grade} — {score.gradeLabel}
+   950→          </div>
+   951→          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+   952→            <trend.Icon className={cn("w-3.5 h-3.5", trend.cls)} />
+   953→            <span className={trend.cls}>{trend.label}</span>
+   954→            {score.previousOverall !== null && <span>· vs {score.previousOverall} sebelum</span>}
+   955→          </div>
+   956→        </Card>
+   957→
+   958→        <Card className="lg:col-span-2 p-4 lg:p-5">
+   959→          <div className="flex items-start gap-4">
+   960→            <Avatar className="w-16 h-16 shrink-0">
+   961→              <AvatarFallback
+   962→                style={{ backgroundColor: userAvatarColor(data, user), color: "#fff" }}
+   963→                className="text-lg font-semibold"
+   964→              >
+   965→                {initials(score.userName)}
+   966→              </AvatarFallback>
+   967→            </Avatar>
+   968→            <div className="min-w-0 flex-1">
+   969→              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Laporan Individu</span>
+   970→              <h2 className="text-xl font-semibold tracking-tight mt-0.5 truncate">{score.userName}</h2>
+   971→              <p className="text-sm text-muted-foreground mt-0.5">{scoreUserInfo.position}</p>
+   972→              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+   973→                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+   974→                  <ClipboardList className="w-3 h-3 text-muted-foreground" />
+   975→                  Tempoh: <span className="font-medium">{PERIOD_LABELS[period]}</span>
+   976→                </span>
+   977→                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+   978→                  {score.period?.label && <span className="font-medium">{score.period.label}</span>}
+   979→                </span>
+   980→                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+   981→                  <CheckCircle2 className="w-3 h-3 text-status-success" />
+   982→                  {tasks.length} tugasan
+   983→                </span>
+   984→                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+   985→                  <Award className="w-3 h-3 text-accent" />
+   986→                  {initiatives.length} inisiatif
+   987→                </span>
+   988→              </div>
+   989→            </div>
+   990→          </div>
+   991→          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border">
+   992→            <Button size="sm" onClick={handleExportPDF}>
+   993→              <Printer className="w-3.5 h-3.5 mr-1.5" /> Eksport PDF
+   994→            </Button>
+   995→            <Button size="sm" variant="outline" onClick={handleExportTasksCSV}>
+   996→              <FileDown className="w-3.5 h-3.5 mr-1.5" /> Eksport CSV Tugasan
+   997→            </Button>
+   998→          </div>
+   999→        </Card>
+  1000→      </div>
+  1001→
+  1002→      {/* Dimension cards */}
+  1003→      <div>
+  1004→        <SectionHeader
+  1005→          title="6 Dimensi Prestasi"
+  1006→          subtitle="Klik untuk butiran drill-down sumber skor"
+  1007→          icon={Gauge}
+  1008→        />
+  1009→        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  1010→          {score.dimensions.map((d) => (
+  1011→            <DimensionCard
+  1012→              key={d.key}
+  1013→              dim={d}
+  1014→              open={drilldown === d.key}
+  1015→              onToggle={() => setDrilldown(drilldown === d.key ? null : d.key)}
+  1016→            />
+  1017→          ))}
+  1018→        </div>
+  1019→      </div>
+  1020→
+  1021→      {/* Tasks table */}
+  1022→      <Card className="p-4 lg:p-5">
+  1023→        <SectionHeader
+  1024→          title="Senarai Tugasan"
+  1025→          subtitle={`${tasks.length} tugasan dalam tempoh ini`}
+  1026→          icon={ListChecks}
+  1027→        />
+  1028→        {tasks.length === 0 ? (
+  1029→          <EmptyState icon={ListChecks} title="Tiada tugasan" description="Tiada tugasan ditemui untuk tempoh ini." />
+  1030→        ) : (
+  1031→          <div className="max-h-[420px] overflow-y-auto scroll-slim rounded-md border border-border">
+  1032→            <Table>
+  1033→              <TableHeader className="sticky top-0 bg-card z-10">
+  1034→                <TableRow>
+  1035→                  <TableHead>Tajuk</TableHead>
+  1036→                  <TableHead className="hidden md:table-cell">Kategori</TableHead>
+  1037→                  <TableHead>Status</TableHead>
+  1038→                  <TableHead className="hidden sm:table-cell">Keutamaan</TableHead>
+  1039→                  <TableHead className="hidden md:table-cell">Tarikh Akhir</TableHead>
+  1040→                  <TableHead className="text-center hidden lg:table-cell">Rating</TableHead>
+  1041→                  <TableHead className="text-center">Semakan Semula</TableHead>
+  1042→                </TableRow>
+  1043→              </TableHeader>
+  1044→              <TableBody>
+  1045→                {tasks.map((t) => (
+  1046→                  <TableRow key={t.id}>
+  1047→                    <TableCell className="font-medium text-sm max-w-[260px] truncate">{t.title}</TableCell>
+  1048→                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{t.category}</TableCell>
+  1049→                    <TableCell><StatusBadge status={t.status} type="task" /></TableCell>
+  1050→                    <TableCell className="hidden sm:table-cell"><StatusBadge status={t.priority} type="priority" /></TableCell>
+  1051→                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">{formatDate(t.dueDate)}</TableCell>
+  1052→                    <TableCell className="text-center hidden lg:table-cell">
+  1053→                      {t.rating !== null ? (
+  1054→                        <span className="inline-flex items-center gap-1 text-xs font-medium">
+  1055→                          <Star className="w-3 h-3 fill-status-warning text-status-warning" />
+  1056→                          {t.rating.toFixed(1)}
+  1057→                        </span>
+  1058→                      ) : (
+  1059→                        <span className="text-muted-foreground text-xs">—</span>
+  1060→                      )}
+  1061→                    </TableCell>
+  1062→                    <TableCell className="text-center">
+  1063→                      <span className={cn(
+  1064→                        "text-xs tabular-nums font-medium",
+  1065→                        t.reworkCount > 0 ? "text-status-warning" : "text-muted-foreground"
+  1066→                      )}>
+  1067→                        {t.reworkCount}
+  1068→                      </span>
+  1069→                    </TableCell>
+  1070→                  </TableRow>
+  1071→                ))}
+  1072→              </TableBody>
+  1073→            </Table>
+  1074→          </div>
+  1075→        )}
+  1076→      </Card>
+  1077→
+  1078→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  1079→        {/* Initiatives */}
+  1080→        <Card className="p-4 lg:p-5">
+  1081→          <SectionHeader
+  1082→            title="Inisiatif Disahkan"
+  1083→            subtitle={`${initiatives.length} inisiatif`}
+  1084→            icon={Award}
+  1085→          />
+  1086→          {initiatives.length === 0 ? (
+  1087→            <EmptyState icon={Award} title="Tiada inisiatif" description="Belum ada inisiatif disahkan dalam tempoh ini." />
+  1088→          ) : (
+  1089→            <ul className="space-y-2 max-h-80 overflow-y-auto scroll-slim">
+  1090→              {initiatives.map((i) => {
+  1091→                const imp = IMPACT_META[i.impactLevel] || IMPACT_META["Kecil"];
+  1092→                return (
+  1093→                  <li key={i.id} className="flex items-start gap-3 p-3 rounded-md border border-border hover:bg-muted/30 transition-colors">
+  1094→                    <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+  1095→                      <Award className="w-4 h-4 text-accent" />
+  1096→                    </div>
+  1097→                    <div className="flex-1 min-w-0">
+  1098→                      <div className="text-sm font-medium truncate">{i.title}</div>
+  1099→                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+  1100→                        <span className={cn("inline-flex px-1.5 py-0.5 rounded font-medium", imp.bg, imp.text)}>{imp.label}</span>
+  1101→                        <span>{i.points} mata</span>
+  1102→                        {i.verifiedAt && <span>· {formatDate(i.verifiedAt)}</span>}
+  1103→                      </div>
+  1104→                    </div>
+  1105→                  </li>
+  1106→                );
+  1107→              })}
+  1108→            </ul>
+  1109→          )}
+  1110→        </Card>
+  1111→
+  1112→        {/* Accountability ratings */}
+  1113→        <Card className="p-4 lg:p-5">
+  1114→          <SectionHeader
+  1115→            title="Rating Akauntabiliti"
+  1116→            subtitle={`${accountabilityRatings.length} rekod terkini`}
+  1117→            icon={Star}
+  1118→          />
+  1119→          {accountabilityRatings.length === 0 ? (
+  1120→            <EmptyState icon={Star} title="Tiada rating" description="Belum ada rating akauntabiliti direkodkan." />
+  1121→          ) : (
+  1122→            <ul className="space-y-2 max-h-80 overflow-y-auto scroll-slim">
+  1123→              {accountabilityRatings.map((a, i) => (
+  1124→                <li key={i} className="p-3 rounded-md border border-border">
+  1125→                  <div className="flex items-center justify-between mb-1">
+  1126→                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{a.period}</span>
+  1127→                    <div className="flex items-center gap-1">
+  1128→                      {[1, 2, 3, 4, 5].map((v) => (
+  1129→                        <Star
+  1130→                          key={v}
+  1131→                          className={cn(
+  1132→                            "w-3.5 h-3.5",
+  1133→                            v <= a.rating ? "fill-status-warning text-status-warning" : "text-muted-foreground/30"
+  1134→                          )}
+  1135→                        />
+  1136→                      ))}
+  1137→                      <span className="text-xs font-semibold ml-1 tabular-nums">{a.rating}/5</span>
+  1138→                    </div>
+  1139→                  </div>
+  1140→                  {a.comment && <p className="text-xs text-muted-foreground mt-1">{a.comment}</p>}
+  1141→                </li>
+  1142→              ))}
+  1143→            </ul>
+  1144→          )}
+  1145→        </Card>
+  1146→      </div>
+  1147→
+  1148→      {/* GM note / action plan */}
+  1149→      <Card className="p-4 lg:p-5">
+  1150→        <SectionHeader
+  1151→          title="Catatan GM / Pelan Tindakan"
+  1152→          subtitle={isGM ? "Catatan tempatan — tidak disimpan ke pelayan" : "Catatan peribadi — tidak disimpan ke pelayan"}
+  1153→          icon={ClipboardList}
+  1154→        />
+  1155→        <Textarea
+  1156→          value={gmNote}
+  1157→          onChange={(e) => setGmNote(e.target.value)}
+  1158→          placeholder={isGM
+  1159→            ? "Tulis catatan pemulihan, kekuatan, atau pelan tindakan untuk staf ini…"
+  1160→            : "Tulis refleksi peribadi atau pelan penambahbaikan…"}
+  1161→          rows={4}
+  1162→          className="resize-y"
+  1163→        />
+  1164→        <p className="text-[11px] text-muted-foreground mt-2">
+  1165→          Nota: Catatan ini kekal dalam pelayar sahaja dan akan dimasukkan ke dalam PDF jika diisi.
+  1166→        </p>
+  1167→      </Card>
+  1168→    </div>
+  1169→  );
+  1170→}
+  1171→
+  1172→function DimensionCard({
+  1173→  dim,
+  1174→  open,
+  1175→  onToggle,
+  1176→}: {
+  1177→  dim: DimensionScore;
+  1178→  open: boolean;
+  1179→  onToggle: () => void;
+  1180→}) {
+  1181→  return (
+  1182→    <Card className="p-4">
+  1183→      <button onClick={onToggle} className="w-full text-left" aria-expanded={open}>
+  1184→        <div className="flex items-center justify-between mb-2">
+  1185→          <div className="flex items-center gap-1.5 min-w-0">
+  1186→            <span className={cn("w-2 h-2 rounded-full shrink-0", scoreBarClass(dim.score))} />
+  1187→            <span className="text-xs font-medium truncate">{dim.name}</span>
+  1188→          </div>
+  1189→          <div className="flex items-center gap-1 shrink-0">
+  1190→            <span className="text-[10px] text-muted-foreground">Pemberat {dim.weight}%</span>
+  1191→            {open ? <ChevronDown className="w-3 h-3 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 text-muted-foreground" />}
+  1192→          </div>
+  1193→        </div>
+  1194→        <div className="flex items-end gap-2 mb-2">
+  1195→          <span className={cn("text-2xl font-semibold tabular-nums", scoreColorClass(dim.score))}>{dim.score}</span>
+  1196→          <span className="text-xs text-muted-foreground mb-1">/ 100</span>
+  1197→          <div className="ml-auto flex items-center gap-1">
+  1198→            {dim.isAutomatic ? (
+  1199→              <span className="text-[9px] px-1 py-0.5 rounded bg-status-success/10 text-status-success">Auto</span>
+  1200→            ) : (
+  1201→              <span className="text-[9px] px-1 py-0.5 rounded bg-accent/10 text-accent">GM</span>
+  1202→            )}
+  1203→            {dim.isGmRated && (
+  1204→              <span className="text-[9px] px-1 py-0.5 rounded bg-muted text-muted-foreground">Dinilai GM</span>
+  1205→            )}
+  1206→          </div>
+  1207→        </div>
+  1208→        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+  1209→          <motion.div
+  1210→            initial={{ width: 0 }}
+  1211→            animate={{ width: `${Math.max(0, Math.min(100, dim.score))}%` }}
+  1212→            transition={{ duration: 0.5 }}
+  1213→            className={cn("h-full rounded-full", scoreBarClass(dim.score))}
+  1214→          />
+  1215→        </div>
+  1216→      </button>
+  1217→      <AnimatePresence>
+  1218→        {open && (
+  1219→          <motion.div
+  1220→            initial={{ height: 0, opacity: 0 }}
+  1221→            animate={{ height: "auto", opacity: 1 }}
+  1222→            exit={{ height: 0, opacity: 0 }}
+  1223→            className="overflow-hidden"
+  1224→          >
+  1225→            <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+  1226→              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+  1227→                Drill-down Sumber Skor
+  1228→              </div>
+  1229→              {dim.details.map((det, i) => (
+  1230→                <div key={i} className="flex items-center justify-between text-xs gap-2">
+  1231→                  <span className="text-muted-foreground truncate">{det.label}</span>
+  1232→                  <span className="font-medium tabular-nums text-right shrink-0">{det.value}</span>
+  1233→                </div>
+  1234→              ))}
+  1235→            </div>
+  1236→          </motion.div>
+  1237→        )}
+  1238→      </AnimatePresence>
+  1239→    </Card>
+  1240→  );
+  1241→}
+  1242→
+  1243→// ============================================================
+  1244→// Small helpers
+  1245→// ============================================================
+  1246→
+  1247→function userAvatarColor(data: IndividualReport | undefined, user: { avatarColor?: string }): string {
+  1248→  // The individual report payload doesn't include avatarColor; fall back to brand sea blue.
+  1249→  return user?.avatarColor || "#1F3A5F";
+  1250→}
+  1251→
+  1252→function usersPositionHint(data: IndividualReport): string {
+  1253→  // score payload doesn't include position; show the period label as fallback context
+  1254→  return data?.score?.period?.label ? `Tempoh: ${data.score.period.label}` : "Staf";
+  1255→}
+  1256→
+  1257→function pdfScoreHex(score: number): string {
+  1258→  if (score >= 75) return "#166534";
+  1259→  if (score >= 60) return "#92400e";
+  1260→  return "#991b1b";
+  1261→}
+  1262→

@@ -21,25 +21,34 @@ export function TasksView() {
   const qc = useQueryClient();
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="space-y-5">
+      <div className="flex items-end justify-between gap-3 flex-wrap hairline-b pb-4">
         <div>
+          <div className="eyebrow mb-1.5">Mod Pengurusan Tugasan</div>
           <h1 className="text-xl lg:text-2xl font-semibold tracking-tight">Tugasan</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-1">
             {user.role === "GM" ? "Urus dan pantau semua tugasan pasukan" : "Tugasan yang ditugaskan kepada anda"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-muted/60 border border-border">
+          <div className="inline-flex items-center gap-0 p-0 rounded-sm bg-muted/40 border border-border card-flat">
             <button
               onClick={() => setMode("kanban")}
-              className={cn("px-2.5 py-1 rounded text-xs font-medium inline-flex items-center gap-1.5 transition-colors", mode === "kanban" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              aria-pressed={mode === "kanban"}
+              className={cn(
+                "px-3 py-1.5 rounded-sm text-xs font-medium inline-flex items-center gap-1.5 transition-colors tabular-nums",
+                mode === "kanban" ? "bg-background text-foreground border border-border-strong" : "text-muted-foreground hover:text-foreground"
+              )}
             >
               <LayoutGrid className="w-3.5 h-3.5" /> Kanban
             </button>
             <button
               onClick={() => setMode("list")}
-              className={cn("px-2.5 py-1 rounded text-xs font-medium inline-flex items-center gap-1.5 transition-colors", mode === "list" ? "bg-background shadow-sm" : "text-muted-foreground")}
+              aria-pressed={mode === "list"}
+              className={cn(
+                "px-3 py-1.5 rounded-sm text-xs font-medium inline-flex items-center gap-1.5 transition-colors tabular-nums",
+                mode === "list" ? "bg-background text-foreground border border-border-strong" : "text-muted-foreground hover:text-foreground"
+              )}
             >
               <ListIcon className="w-3.5 h-3.5" /> Senarai
             </button>
@@ -53,7 +62,11 @@ export function TasksView() {
         </div>
       </div>
 
-      {mode === "kanban" ? <TasksKanban onOpenTask={(id) => setSelectedTaskId(id)} onEditTask={(id) => { setEditTaskId(id); setFormOpen(true); }} /> : <TasksList onOpenTask={(id) => setSelectedTaskId(id)} onEditTask={(id) => { setEditTaskId(id); setFormOpen(true); }} />}
+      {mode === "kanban" ? (
+        <TasksKanban onOpenTask={(id) => setSelectedTaskId(id)} onEditTask={(id) => { setEditTaskId(id); setFormOpen(true); }} />
+      ) : (
+        <TasksList onOpenTask={(id) => setSelectedTaskId(id)} onEditTask={(id) => { setEditTaskId(id); setFormOpen(true); }} />
+      )}
 
       {selectedTaskId && (
         <TaskDetail

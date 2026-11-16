@@ -342,11 +342,11 @@ export function ReportsView() {
       />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "team" | "individual")}>
-        <TabsList>
-          <TabsTrigger value="team" className="gap-1.5">
+        <TabsList className="rounded-sm">
+          <TabsTrigger value="team" className="gap-1.5 rounded-sm" >
             <Users className="w-3.5 h-3.5" /> Laporan Pasukan
           </TabsTrigger>
-          <TabsTrigger value="individual" className="gap-1.5">
+          <TabsTrigger value="individual" className="gap-1.5 rounded-sm">
             <FileText className="w-3.5 h-3.5" /> Laporan Individu
           </TabsTrigger>
         </TabsList>
@@ -368,12 +368,10 @@ export function ReportsView() {
 
 function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-4 border-b border-border">
       <div>
-        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Eksport &amp; Pelaporan
-        </span>
-        <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">{title}</h1>
+        <span className="eyebrow">Laporan Prestasi</span>
+        <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1">{title}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
       </div>
       <PeriodSelector />
@@ -550,17 +548,19 @@ function TeamReportSection({ period }: { period: PeriodKey }) {
       </div>
 
       {/* Team table + export */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Jadual Prestasi Staf"
+          eyebrow="Pasukan"
+          index="01"
           subtitle={`Tempoh: ${PERIOD_LABELS[period]}`}
           icon={ListChecks}
           action={
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={handleExportCSV}>
+              <Button size="sm" variant="outline" className="rounded-sm" onClick={handleExportCSV}>
                 <FileDown className="w-3.5 h-3.5 mr-1.5" /> Eksport CSV
               </Button>
-              <Button size="sm" onClick={handleExportPDF}>
+              <Button size="sm" className="rounded-sm bg-foreground text-background hover:bg-foreground/90" onClick={handleExportPDF}>
                 <Printer className="w-3.5 h-3.5 mr-1.5" /> Eksport PDF
               </Button>
             </div>
@@ -569,16 +569,16 @@ function TeamReportSection({ period }: { period: PeriodKey }) {
         <div className="max-h-[560px] overflow-y-auto scroll-slim rounded-md border border-border">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
-              <TableRow>
-                <TableHead className="w-10 text-center">#</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead className="hidden md:table-cell">Jawatan</TableHead>
-                <TableHead className="text-center">Skor</TableHead>
-                <TableHead>Gred</TableHead>
-                <TableHead className="text-center hidden sm:table-cell">Siap</TableHead>
-                <TableHead className="text-center hidden sm:table-cell">Tertunggak</TableHead>
-                <TableHead className="text-center hidden md:table-cell">Aktif</TableHead>
-                <TableHead className="text-center">Trend</TableHead>
+              <TableRow className="hover:bg-transparent border-b border-border">
+                <TableHead className="w-10 text-center eyebrow">#</TableHead>
+                <TableHead className="eyebrow">Nama</TableHead>
+                <TableHead className="hidden md:table-cell eyebrow">Jawatan</TableHead>
+                <TableHead className="text-center eyebrow">Skor</TableHead>
+                <TableHead className="eyebrow">Gred</TableHead>
+                <TableHead className="text-center hidden sm:table-cell eyebrow">Siap</TableHead>
+                <TableHead className="text-center hidden sm:table-cell eyebrow">Tertunggak</TableHead>
+                <TableHead className="text-center hidden md:table-cell eyebrow">Aktif</TableHead>
+                <TableHead className="text-center eyebrow">Trend</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -586,22 +586,22 @@ function TeamReportSection({ period }: { period: PeriodKey }) {
                 const t = st.tasks || { completed: 0, overdue: 0, active: 0, total: 0 };
                 const trend = sc ? trendMeta(sc.trend) : null;
                 return (
-                  <TableRow key={st.id}>
+                  <TableRow key={st.id} className="border-b border-border/50">
                     <TableCell className="text-center">
                       <span className={cn(
-                        "inline-flex w-6 h-6 items-center justify-center rounded text-[11px] font-bold",
-                        rank === 1 ? "bg-status-warning/20 text-status-warning" :
-                        rank === 2 ? "bg-muted-foreground/20 text-foreground" :
-                        rank === 3 ? "bg-status-danger/15 text-status-danger" :
-                        "bg-muted text-muted-foreground"
+                        "inline-flex w-6 h-6 items-center justify-center rounded-sm text-[11px] font-bold tabular-nums border",
+                        rank === 1 ? "bg-status-warning/20 text-status-warning border-status-warning/30" :
+                        rank === 2 ? "bg-muted-foreground/20 text-foreground border-border" :
+                        rank === 3 ? "bg-status-danger/15 text-status-danger border-status-danger/30" :
+                        "bg-muted text-muted-foreground border-border"
                       )}>
                         {rank || "—"}
                       </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
-                        <Avatar className="w-7 h-7">
-                          <AvatarFallback style={{ backgroundColor: st.avatarColor, color: "#fff" }} className="text-[10px] font-semibold">
+                        <Avatar className="w-7 h-7 rounded-sm">
+                          <AvatarFallback style={{ backgroundColor: st.avatarColor, color: "#fff" }} className="text-[10px] font-semibold rounded-sm">
                             {initials(st.name)}
                           </AvatarFallback>
                         </Avatar>
@@ -611,12 +611,12 @@ function TeamReportSection({ period }: { period: PeriodKey }) {
                     <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{st.position}</TableCell>
                     <TableCell className="text-center">
                       {sc ? (
-                        <span className={cn("text-base font-bold tabular-nums", scoreColorClass(sc.overall))}>{sc.overall}</span>
+                        <span className={cn("text-base font-bold tabular-nums num-display", scoreColorClass(sc.overall))}>{sc.overall}</span>
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       {sc && (
-                        <span className={cn("inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium", gradeBadgeClass(sc.grade))}>
+                        <span className={cn("inline-flex px-1.5 py-0.5 rounded-sm text-[10px] font-medium border border-border", gradeBadgeClass(sc.grade))}>
                           {sc.grade} · {sc.gradeLabel}
                         </span>
                       )}
@@ -673,21 +673,21 @@ function KpiTile({
   };
   const a = accentMap[accent];
   return (
-    <Card className="p-4 card-flat relative overflow-hidden">
+    <Card className="p-4 card-flat rounded-md relative overflow-hidden">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[10px] lg:text-[11px] font-medium uppercase tracking-wide text-muted-foreground truncate">{label}</div>
+          <div className="eyebrow truncate">{label}</div>
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="text-2xl lg:text-3xl font-semibold tracking-tight mt-1.5 tabular-nums"
+            className="text-2xl lg:text-3xl font-semibold num-display tabular-nums tracking-tight mt-1.5"
           >
             {value}
           </motion.div>
-          {hint && <div className="text-[11px] text-muted-foreground mt-1">{hint}</div>}
+          {hint && <div className="text-[11px] text-muted-foreground mt-1 tabular-nums">{hint}</div>}
         </div>
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", a.bg, a.text)}>
+        <div className={cn("w-9 h-9 rounded-sm flex items-center justify-center shrink-0 border border-border", a.bg, a.text)}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
@@ -739,13 +739,13 @@ function IndividualReportSectionForGM({ period }: { period: PeriodKey }) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-3 lg:p-4">
+      <Card className="p-3 lg:p-4 card-flat rounded-md">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground shrink-0">
+          <Label className="eyebrow shrink-0">
             Pilih Staf
           </Label>
           <Select value={effectiveStaffId} onValueChange={setSelectedStaffId}>
-            <SelectTrigger className="w-full sm:w-80">
+            <SelectTrigger className="w-full sm:w-80 rounded-sm">
               <SelectValue placeholder="Pilih staf…" />
             </SelectTrigger>
             <SelectContent>
@@ -942,57 +942,60 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
     <div className="space-y-4">
       {/* Header card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="p-4 lg:p-5 flex flex-col items-center justify-center text-center">
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-3">Skor Keseluruhan</div>
+        <Card className="p-4 lg:p-5 card-flat rounded-md flex flex-col items-center justify-center text-center">
+          <div className="eyebrow mb-3">Skor Keseluruhan</div>
           <ScoreRing score={score.overall} grade={score.grade} showGrade size={140} thickness={12} />
-          <div className={cn("mt-3 px-4 py-1.5 rounded-full text-sm font-medium", gradeBadgeClass(score.grade))}>
+          <div className={cn("mt-3 px-4 py-1.5 rounded-sm text-sm font-medium border border-border", gradeBadgeClass(score.grade))}>
             {score.grade} — {score.gradeLabel}
           </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground tabular-nums">
             <trend.Icon className={cn("w-3.5 h-3.5", trend.cls)} />
             <span className={trend.cls}>{trend.label}</span>
             {score.previousOverall !== null && <span>· vs {score.previousOverall} sebelum</span>}
           </div>
         </Card>
 
-        <Card className="lg:col-span-2 p-4 lg:p-5">
+        <Card className="lg:col-span-2 p-4 lg:p-5 card-flat rounded-md">
           <div className="flex items-start gap-4">
-            <Avatar className="w-16 h-16 shrink-0">
+            <Avatar className="w-16 h-16 shrink-0 rounded-sm">
               <AvatarFallback
                 style={{ backgroundColor: userAvatarColor(data, user), color: "#fff" }}
-                className="text-lg font-semibold"
+                className="text-lg font-semibold rounded-sm"
               >
                 {initials(score.userName)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Laporan Individu</span>
-              <h2 className="text-xl font-semibold tracking-tight mt-0.5 truncate">{score.userName}</h2>
+              <span className="eyebrow">Laporan Individu</span>
+              <h2 className="text-xl font-semibold tracking-tight mt-1 truncate">{score.userName}</h2>
               <p className="text-sm text-muted-foreground mt-0.5">{scoreUserInfo.position}</p>
               <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/60 border border-border">
                   <ClipboardList className="w-3 h-3 text-muted-foreground" />
-                  Tempoh: <span className="font-medium">{PERIOD_LABELS[period]}</span>
+                  <span className="eyebrow mr-1">Tempoh</span>
+                  <span className="font-medium">{PERIOD_LABELS[period]}</span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
-                  {score.period?.label && <span className="font-medium">{score.period.label}</span>}
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/60 border border-border">
+                  {score.period?.label && <span className="font-medium tabular-nums">{score.period.label}</span>}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/60 border border-border">
                   <CheckCircle2 className="w-3 h-3 text-status-success" />
-                  {tasks.length} tugasan
+                  <span className="tabular-nums font-medium">{tasks.length}</span>
+                  <span className="eyebrow ml-0.5">tugasan</span>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/60">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/60 border border-border">
                   <Award className="w-3 h-3 text-accent" />
-                  {initiatives.length} inisiatif
+                  <span className="tabular-nums font-medium">{initiatives.length}</span>
+                  <span className="eyebrow ml-0.5">inisiatif</span>
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border">
-            <Button size="sm" onClick={handleExportPDF}>
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 hairline-t border-border">
+            <Button size="sm" className="rounded-sm bg-foreground text-background hover:bg-foreground/90" onClick={handleExportPDF}>
               <Printer className="w-3.5 h-3.5 mr-1.5" /> Eksport PDF
             </Button>
-            <Button size="sm" variant="outline" onClick={handleExportTasksCSV}>
+            <Button size="sm" variant="outline" className="rounded-sm" onClick={handleExportTasksCSV}>
               <FileDown className="w-3.5 h-3.5 mr-1.5" /> Eksport CSV Tugasan
             </Button>
           </div>
@@ -1003,14 +1006,17 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
       <div>
         <SectionHeader
           title="6 Dimensi Prestasi"
+          eyebrow="Pecahan Skor"
+          index="02"
           subtitle="Klik untuk butiran drill-down sumber skor"
           icon={Gauge}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {score.dimensions.map((d) => (
+          {score.dimensions.map((d, i) => (
             <DimensionCard
               key={d.key}
               dim={d}
+              index={i + 1}
               open={drilldown === d.key}
               onToggle={() => setDrilldown(drilldown === d.key ? null : d.key)}
             />
@@ -1019,9 +1025,11 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
       </div>
 
       {/* Tasks table */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Senarai Tugasan"
+          eyebrow="Tugasan"
+          index="03"
           subtitle={`${tasks.length} tugasan dalam tempoh ini`}
           icon={ListChecks}
         />
@@ -1031,27 +1039,27 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
           <div className="max-h-[420px] overflow-y-auto scroll-slim rounded-md border border-border">
             <Table>
               <TableHeader className="sticky top-0 bg-card z-10">
-                <TableRow>
-                  <TableHead>Tajuk</TableHead>
-                  <TableHead className="hidden md:table-cell">Kategori</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Keutamaan</TableHead>
-                  <TableHead className="hidden md:table-cell">Tarikh Akhir</TableHead>
-                  <TableHead className="text-center hidden lg:table-cell">Rating</TableHead>
-                  <TableHead className="text-center">Semakan Semula</TableHead>
+                <TableRow className="hover:bg-transparent border-b border-border">
+                  <TableHead className="eyebrow">Tajuk</TableHead>
+                  <TableHead className="hidden md:table-cell eyebrow">Kategori</TableHead>
+                  <TableHead className="eyebrow">Status</TableHead>
+                  <TableHead className="hidden sm:table-cell eyebrow">Keutamaan</TableHead>
+                  <TableHead className="hidden md:table-cell eyebrow">Tarikh Akhir</TableHead>
+                  <TableHead className="text-center hidden lg:table-cell eyebrow">Rating</TableHead>
+                  <TableHead className="text-center eyebrow">Semakan Semula</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tasks.map((t) => (
-                  <TableRow key={t.id}>
+                  <TableRow key={t.id} className="border-b border-border/50">
                     <TableCell className="font-medium text-sm max-w-[260px] truncate">{t.title}</TableCell>
                     <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{t.category}</TableCell>
                     <TableCell><StatusBadge status={t.status} type="task" /></TableCell>
                     <TableCell className="hidden sm:table-cell"><StatusBadge status={t.priority} type="priority" /></TableCell>
-                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">{formatDate(t.dueDate)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap tabular-nums">{formatDate(t.dueDate)}</TableCell>
                     <TableCell className="text-center hidden lg:table-cell">
                       {t.rating !== null ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium tabular-nums">
                           <Star className="w-3 h-3 fill-status-warning text-status-warning" />
                           {t.rating.toFixed(1)}
                         </span>
@@ -1077,9 +1085,11 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Initiatives */}
-        <Card className="p-4 lg:p-5">
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
           <SectionHeader
             title="Inisiatif Disahkan"
+            eyebrow="Inisiatif"
+            index="04"
             subtitle={`${initiatives.length} inisiatif`}
             icon={Award}
           />
@@ -1090,16 +1100,16 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
               {initiatives.map((i) => {
                 const imp = IMPACT_META[i.impactLevel] || IMPACT_META["Kecil"];
                 return (
-                  <li key={i.id} className="flex items-start gap-3 p-3 rounded-md border border-border hover:bg-muted/30 transition-colors">
-                    <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                  <li key={i.id} className="flex items-start gap-3 p-3 rounded-sm border border-border hover:bg-muted/30 transition-colors">
+                    <div className="w-8 h-8 rounded-sm bg-accent/10 border border-border flex items-center justify-center shrink-0">
                       <Award className="w-4 h-4 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{i.title}</div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <span className={cn("inline-flex px-1.5 py-0.5 rounded font-medium", imp.bg, imp.text)}>{imp.label}</span>
-                        <span>{i.points} mata</span>
-                        {i.verifiedAt && <span>· {formatDate(i.verifiedAt)}</span>}
+                        <span className={cn("inline-flex px-1.5 py-0.5 rounded-sm font-medium border border-border", imp.bg, imp.text)}>{imp.label}</span>
+                        <span className="tabular-nums">{i.points} mata</span>
+                        {i.verifiedAt && <span className="tabular-nums">· {formatDate(i.verifiedAt)}</span>}
                       </div>
                     </div>
                   </li>
@@ -1110,9 +1120,11 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
         </Card>
 
         {/* Accountability ratings */}
-        <Card className="p-4 lg:p-5">
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
           <SectionHeader
             title="Rating Akauntabiliti"
+            eyebrow="Akauntabiliti"
+            index="05"
             subtitle={`${accountabilityRatings.length} rekod terkini`}
             icon={Star}
           />
@@ -1121,9 +1133,9 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
           ) : (
             <ul className="space-y-2 max-h-80 overflow-y-auto scroll-slim">
               {accountabilityRatings.map((a, i) => (
-                <li key={i} className="p-3 rounded-md border border-border">
+                <li key={i} className="p-3 rounded-sm border border-border">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{a.period}</span>
+                    <span className="eyebrow">{a.period}</span>
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((v) => (
                         <Star
@@ -1146,9 +1158,11 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
       </div>
 
       {/* GM note / action plan */}
-      <Card className="p-4 lg:p-5">
+      <Card className="p-4 lg:p-5 card-flat rounded-md">
         <SectionHeader
           title="Catatan GM / Pelan Tindakan"
+          eyebrow="Catatan"
+          index="06"
           subtitle={isGM ? "Catatan tempatan — tidak disimpan ke pelayan" : "Catatan peribadi — tidak disimpan ke pelayan"}
           icon={ClipboardList}
         />
@@ -1159,7 +1173,7 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
             ? "Tulis catatan pemulihan, kekuatan, atau pelan tindakan untuk staf ini…"
             : "Tulis refleksi peribadi atau pelan penambahbaikan…"}
           rows={4}
-          className="resize-y"
+          className="resize-y rounded-sm"
         />
         <p className="text-[11px] text-muted-foreground mt-2">
           Nota: Catatan ini kekal dalam pelayar sahaja dan akan dimasukkan ke dalam PDF jika diisi.
@@ -1171,46 +1185,48 @@ function IndividualReportSection({ userId, period }: { userId: string; period: P
 
 function DimensionCard({
   dim,
+  index,
   open,
   onToggle,
 }: {
   dim: DimensionScore;
+  index: number;
   open: boolean;
   onToggle: () => void;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="p-4 card-flat rounded-md">
       <button onClick={onToggle} className="w-full text-left" aria-expanded={open}>
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className={cn("w-2 h-2 rounded-full shrink-0", scoreBarClass(dim.score))} />
-            <span className="text-xs font-medium truncate">{dim.name}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="index-numeral text-xs">{String(index).padStart(2, "0")}</span>
+            <span className="eyebrow truncate">{dim.name}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[10px] text-muted-foreground">Pemberat {dim.weight}%</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums">Pemberat {dim.weight}%</span>
             {open ? <ChevronDown className="w-3 h-3 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 text-muted-foreground" />}
           </div>
         </div>
         <div className="flex items-end gap-2 mb-2">
-          <span className={cn("text-2xl font-semibold tabular-nums", scoreColorClass(dim.score))}>{dim.score}</span>
-          <span className="text-xs text-muted-foreground mb-1">/ 100</span>
+          <span className={cn("text-2xl font-semibold num-display tabular-nums", scoreColorClass(dim.score))}>{dim.score}</span>
+          <span className="text-xs text-muted-foreground mb-1 tabular-nums">/ 100</span>
           <div className="ml-auto flex items-center gap-1">
             {dim.isAutomatic ? (
-              <span className="text-[9px] px-1 py-0.5 rounded bg-status-success/10 text-status-success">Auto</span>
+              <span className="text-[9px] px-1 py-0.5 rounded-sm bg-status-success/10 text-status-success border border-status-success/20">Auto</span>
             ) : (
-              <span className="text-[9px] px-1 py-0.5 rounded bg-accent/10 text-accent">GM</span>
+              <span className="text-[9px] px-1 py-0.5 rounded-sm bg-accent/10 text-accent border border-accent/20">GM</span>
             )}
             {dim.isGmRated && (
-              <span className="text-[9px] px-1 py-0.5 rounded bg-muted text-muted-foreground">Dinilai GM</span>
+              <span className="text-[9px] px-1 py-0.5 rounded-sm bg-muted text-muted-foreground border border-border">Dinilai GM</span>
             )}
           </div>
         </div>
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="h-1.5 rounded-none bg-muted overflow-hidden border border-border">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${Math.max(0, Math.min(100, dim.score))}%` }}
             transition={{ duration: 0.5 }}
-            className={cn("h-full rounded-full", scoreBarClass(dim.score))}
+            className={cn("h-full rounded-none", scoreBarClass(dim.score))}
           />
         </div>
       </button>
@@ -1222,8 +1238,8 @@ function DimensionCard({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 pt-3 border-t border-border space-y-1.5">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+            <div className="mt-3 pt-3 hairline-t border-border space-y-1.5">
+              <div className="eyebrow mb-1">
                 Drill-down Sumber Skor
               </div>
               {dim.details.map((det, i) => (

@@ -63,28 +63,28 @@ export function GmDashboard() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-end justify-between gap-3 flex-wrap pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Papan Pemuka GM</span>
-          </div>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">Gambaran Keseluruhan Pasukan</h1>
+          <div className="eyebrow">Papan Pemuka GM</div>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1">Gambaran Keseluruhan Pasukan</h1>
         </div>
         <PeriodSelector />
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <KpiCard label="Tugasan Aktif" value={kpis?.active ?? 0} icon={Activity} accent="primary" hint={`${kpis?.overdue ?? 0} tertunggak`} trend="flat" />
-        <KpiCard label="Siap Minggu Ini" value={kpis?.completedThisWeek ?? 0} icon={CheckCircle2} accent="success" hint="tugasan disiapkan" />
-        <KpiCard label="Purata Skor Pasukan" value={kpis?.avgScore ?? 0} icon={BarChart3} accent="accent" hint={`daripada ${kpis?.totalStaff ?? 0} staf`} onClick={() => setView("performance")} />
-        <KpiCard label="Staf Beban Tinggi" value={kpis?.overloadedStaff ?? 0} icon={Zap} accent="warning" hint="memerlukan perhatian" onClick={() => setView("workload")} />
+        <KpiCard index={1} label="Tugasan Aktif" value={kpis?.active ?? 0} icon={Activity} accent="primary" hint={`${kpis?.overdue ?? 0} tertunggak`} trend="flat" />
+        <KpiCard index={2} label="Siap Minggu Ini" value={kpis?.completedThisWeek ?? 0} icon={CheckCircle2} accent="success" hint="tugasan disiapkan" />
+        <KpiCard index={3} label="Purata Skor Pasukan" value={kpis?.avgScore ?? 0} icon={BarChart3} accent="accent" hint={`daripada ${kpis?.totalStaff ?? 0} staf`} onClick={() => setView("performance")} />
+        <KpiCard index={4} label="Staf Beban Tinggi" value={kpis?.overloadedStaff ?? 0} icon={Zap} accent="warning" hint="memerlukan perhatian" onClick={() => setView("workload")} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
         {/* Leaderboard */}
-        <Card className="xl:col-span-2 p-4 lg:p-5">
+        <Card className="xl:col-span-2 p-4 lg:p-5 card-flat rounded-md">
           <SectionHeader
+            index={1}
+            eyebrow="Prestasi Pasukan"
             title="Kedudukan Prestasi Staf"
             subtitle={`Tempoh: ${scores[0]?.period?.label || "Bulan Ini"}`}
             icon={Users}
@@ -121,7 +121,7 @@ export function GmDashboard() {
                       }}
                     >
                       <td className="py-3 pr-2">
-                        <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-md text-xs font-semibold tabular-nums", idx === 0 ? "bg-status-warning/20 text-status-warning" : idx === 1 ? "bg-muted text-foreground" : idx === 2 ? "bg-status-danger/15 text-status-danger" : "text-muted-foreground")}>
+                        <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-sm text-xs font-semibold tabular-nums border", idx === 0 ? "bg-status-warning/15 text-status-warning border-status-warning/40" : idx === 1 ? "bg-muted text-foreground border-border" : idx === 2 ? "bg-status-danger/10 text-status-danger border-status-danger/30" : "text-muted-foreground border-transparent")}>
                           {idx + 1}
                         </span>
                       </td>
@@ -149,7 +149,7 @@ export function GmDashboard() {
                         </span>
                       </td>
                       <td className="py-2 px-2 text-center">
-                        <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold", GRADE_META[s.grade].bg, GRADE_META[s.grade].text)}>
+                        <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded-sm text-xs font-bold border", GRADE_META[s.grade].bg, GRADE_META[s.grade].text, GRADE_META[s.grade].border)}>
                           {s.grade}
                         </span>
                       </td>
@@ -168,22 +168,22 @@ export function GmDashboard() {
         </Card>
 
         {/* Radar chart - average team */}
-        <Card className="p-4 lg:p-5">
-          <SectionHeader title="Profil 6 Dimensi" subtitle="Purata pasukan" icon={BarChart3} />
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
+          <SectionHeader index={2} eyebrow="Profil Pasukan" title="Profil 6 Dimensi" subtitle="Purata pasukan" icon={BarChart3} />
           <TeamRadar scores={scores} />
         </Card>
       </div>
 
       {/* Workload heatmap + Attention */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
-        <Card className="xl:col-span-2 p-4 lg:p-5">
-          <SectionHeader title="Peta Haba Beban Kerja" subtitle="Status beban staf mengikut minggu" icon={Activity} action={<button onClick={() => setView("workload")} className="text-xs text-accent hover:underline inline-flex items-center gap-1">Butiran <ChevronRight className="w-3 h-3" /></button>} />
+        <Card className="xl:col-span-2 p-4 lg:p-5 card-flat rounded-md">
+          <SectionHeader index={3} eyebrow="Beban Kerja" title="Peta Haba Beban Kerja" subtitle="Status beban staf mengikut minggu" icon={Activity} action={<button onClick={() => setView("workload")} className="text-xs text-accent hover:underline inline-flex items-center gap-1">Butiran <ChevronRight className="w-3 h-3" /></button>} />
           <WorkloadHeatmap workloads={workloads} scores={scores} />
         </Card>
 
         {/* Attention list */}
-        <Card className="p-4 lg:p-5">
-          <SectionHeader title="Perlu Perhatian" subtitle="Isu yang memerlukan tindakan" icon={AlertTriangle} />
+        <Card className="p-4 lg:p-5 card-flat rounded-md">
+          <SectionHeader index={4} eyebrow="Isu Kritikal" title="Perlu Perhatian" subtitle="Isu yang memerlukan tindakan" icon={AlertTriangle} />
           <AttentionList attention={attention} onGotoTasks={() => setView("tasks")} />
         </Card>
       </div>
@@ -208,20 +208,23 @@ function TeamRadar({ scores }: { scores: StaffScore[] }) {
     const vals = scores.map((s) => s.dimensions.find((x) => x.key === d)?.score || 0);
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
   });
-  const data = dims.map((d, i) => ({ dim: labels[d], Pasukan: avg[i] }));
   const top = scores[0];
-  const topData = dims.map((d) => ({ dim: labels[d], Top: top.dimensions.find((x) => x.key === d)?.score || 0 }));
+  const combined = dims.map((d, i) => ({
+    dim: labels[d],
+    Pasukan: avg[i],
+    Top: top.dimensions.find((x) => x.key === d)?.score || 0,
+  }));
 
   return (
-    <div className="h-64">
+    <div className="h-72 px-2">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} outerRadius="75%">
-          <PolarGrid stroke="hsl(var(--border))" />
-          <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-          <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} angle={90} />
-          <Radar name="Purata Pasukan" dataKey="Pasukan" stroke="#0E7C86" fill="#0E7C86" fillOpacity={0.25} strokeWidth={2} />
-          <Radar name="Staf Teratas" dataKey="Top" data={topData} stroke="#1F3A5F" fill="#1F3A5F" fillOpacity={0.1} strokeWidth={2} strokeDasharray="3 3" />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
+        <RadarChart data={combined} outerRadius="70%" margin={{ top: 8, right: 28, bottom: 8, left: 28 }}>
+          <PolarGrid stroke="var(--border)" />
+          <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+          <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} angle={90} />
+          <Radar name="Purata Pasukan" dataKey="Pasukan" stroke="#0E7C86" fill="#0E7C86" fillOpacity={0.45} strokeWidth={2} isAnimationActive={false} />
+          <Radar name="Staf Teratas" dataKey="Top" stroke="#1F3A5F" fill="#1F3A5F" fillOpacity={0.15} strokeWidth={1.5} strokeDasharray="3 3" isAnimationActive={false} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: "1px solid var(--border)", background: "var(--popover)" }} />
         </RadarChart>
       </ResponsiveContainer>
     </div>
@@ -247,17 +250,17 @@ function WorkloadHeatmap({ workloads, scores }: { workloads: WorkloadInfo[]; sco
               <div className="text-[10px] text-muted-foreground">{w.activeTasks} tugasan aktif</div>
             </div>
             <div className="flex-1 flex items-center gap-1.5">
-              <div className="flex-1 h-6 rounded bg-muted/40 overflow-hidden relative">
+              <div className="flex-1 h-6 rounded-sm bg-muted/40 overflow-hidden relative">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(100, w.utilisation)}%` }}
                   transition={{ duration: 0.6 }}
-                  className={cn("h-full rounded", statusColor[w.status])}
+                  className={cn("h-full", statusColor[w.status])}
                 />
-                <span className="absolute inset-0 flex items-center px-2 text-[10px] font-medium text-foreground/80">
-                  {w.utilisation}%
-                </span>
               </div>
+              <span className="text-[10px] font-semibold tabular-nums w-9 text-right shrink-0 text-muted-foreground">
+                {w.utilisation}%
+              </span>
               <StatusBadge status={w.status} type="workload" />
             </div>
             {score && (
@@ -272,7 +275,7 @@ function WorkloadHeatmap({ workloads, scores }: { workloads: WorkloadInfo[]; sco
         <span className="font-medium">Legenda:</span>
         {["Seimbang", "Tinggi", "Beban Berlebihan"].map((s) => (
           <span key={s} className="inline-flex items-center gap-1">
-            <span className={cn("w-2.5 h-2.5 rounded", statusColor[s])} /> {s}
+            <span className={cn("w-2.5 h-2.5 rounded-sm", statusColor[s])} /> {s}
           </span>
         ))}
       </div>
@@ -300,16 +303,18 @@ function AttentionList({ attention, onGotoTasks }: { attention: any; onGotoTasks
 
 function AttentionItem({ item, onClick }: { item: any; onClick: () => void }) {
   const config = {
-    overdue: { icon: Clock, color: "text-status-danger", bg: "bg-status-danger/10", label: "Tertunggak" },
-    blocker: { icon: AlertTriangle, color: "text-status-danger", bg: "bg-status-danger/10", label: "Halangan" },
-    deadline: { icon: Clock, color: "text-status-warning", bg: "bg-status-warning/15", label: "Hampir Tarikh Akhir" },
-    overload: { icon: Zap, color: "text-status-warning", bg: "bg-status-warning/15", label: "Beban Tinggi" },
-  }[item.type as string] || { icon: AlertTriangle, color: "text-muted-foreground", bg: "bg-muted", label: "Lain" };
+    overdue: { icon: Clock, color: "text-status-danger", bar: "bg-status-danger", label: "Tertunggak" },
+    blocker: { icon: AlertTriangle, color: "text-status-danger", bar: "bg-status-danger", label: "Halangan" },
+    deadline: { icon: Clock, color: "text-status-warning", bar: "bg-status-warning", label: "Hampir Tarikh Akhir" },
+    overload: { icon: Zap, color: "text-status-warning", bar: "bg-status-warning", label: "Beban Tinggi" },
+  }[item.type as string] || { icon: AlertTriangle, color: "text-muted-foreground", bar: "bg-muted-foreground", label: "Lain" };
   const Icon = config.icon;
   return (
-    <button onClick={onClick} className="w-full text-left p-2.5 rounded-md border border-border/60 hover:bg-muted/40 transition-colors group">
+    <button onClick={onClick} className="relative w-full text-left p-2.5 pl-3 rounded-md border border-border hover:bg-muted/40 transition-colors group overflow-hidden">
+      {/* Swiss accent: 1px left-edge color bar, full height */}
+      <span className={cn("absolute left-0 top-0 bottom-0 w-px", config.bar)} aria-hidden />
       <div className="flex items-start gap-2.5">
-        <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", config.bg)}>
+        <div className="w-7 h-7 rounded-sm border border-border flex items-center justify-center shrink-0">
           <Icon className={cn("w-3.5 h-3.5", config.color)} />
         </div>
         <div className="min-w-0 flex-1">
@@ -320,7 +325,7 @@ function AttentionItem({ item, onClick }: { item: any; onClick: () => void }) {
           <div className="text-xs font-medium mt-0.5 truncate">
             {item.title || item.description || item.userName}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">
+          <div className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">
             {item.assigneeName && <span>{item.assigneeName}</span>}
             {item.dueDate && <span> · Tarikh akhir: {formatDate(item.dueDate)}</span>}
             {item.utilisation && <span> · {item.utilisation}% utilisasi</span>}

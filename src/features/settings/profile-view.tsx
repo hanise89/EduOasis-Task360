@@ -211,12 +211,10 @@ export function ProfileView() {
   return (
     <PageContainer>
       {/* Header */}
-      <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div className="flex items-end justify-between gap-3 flex-wrap pb-4 border-b border-border">
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Akaun Saya
-          </span>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5 flex items-center gap-2">
+          <span className="eyebrow">Profil Pengguna</span>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-1 flex items-center gap-2">
             <UserIcon className="w-5 h-5 text-accent" />
             Profil Pengguna
           </h1>
@@ -233,14 +231,14 @@ export function ProfileView() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Profile header card */}
-          <Card className="lg:col-span-1 p-4 lg:p-6">
+          <Card className="lg:col-span-1 p-4 lg:p-6 card-flat rounded-md">
             <div className="flex flex-col items-center text-center">
               <Avatar
-                className="w-24 h-24 text-2xl font-semibold ring-4 ring-background shadow-sm"
+                className="w-24 h-24 text-2xl font-semibold rounded-sm border border-border"
                 style={{ backgroundColor: edit.avatarColor }}
               >
                 <AvatarFallback
-                  className="text-white font-semibold"
+                  className="text-white font-semibold rounded-sm"
                   style={{ backgroundColor: edit.avatarColor }}
                 >
                   {initials(self.name)}
@@ -251,7 +249,7 @@ export function ProfileView() {
               </h2>
               <Badge
                 className={cn(
-                  "mt-1.5 gap-1",
+                  "mt-1.5 gap-1 rounded-sm border border-border",
                   roleMeta.bg,
                   roleMeta.text
                 )}
@@ -265,8 +263,8 @@ export function ProfileView() {
                 {self.position || "Tiada jawatan"}
               </p>
             </div>
-            <Separator className="my-4" />
-            <dl className="space-y-2.5 text-sm">
+            <Separator className="my-4 bg-border" />
+            <dl className="space-y-0 text-sm">
               <InfoRow
                 icon={Mail}
                 label="E-mel"
@@ -291,14 +289,17 @@ export function ProfileView() {
                 icon={UserIcon}
                 label="Status"
                 value={self.active ? "Aktif" : "Tidak Aktif"}
+                last
               />
             </dl>
           </Card>
 
           {/* Edit form */}
-          <Card className="lg:col-span-2 p-4 lg:p-6">
+          <Card className="lg:col-span-2 p-4 lg:p-6 card-flat rounded-md">
             <SectionHeader
               title="Edit Profil"
+              eyebrow="Pengguna"
+              index="01"
               subtitle={
                 isGM
                   ? "Anda boleh edit semua medan"
@@ -308,6 +309,7 @@ export function ProfileView() {
               action={
                 <Button
                   size="sm"
+                  className="rounded-sm"
                   onClick={patchSelf}
                   disabled={!selfDirty || savingId === self.id}
                 >
@@ -323,7 +325,7 @@ export function ProfileView() {
 
             {/* Avatar color picker */}
             <div className="space-y-2 mb-5">
-              <Label className="flex items-center gap-1.5">
+              <Label className="eyebrow flex items-center gap-1.5">
                 <Palette className="w-3.5 h-3.5" />
                 Warna Avatar
               </Label>
@@ -340,9 +342,9 @@ export function ProfileView() {
                       aria-label={`Pilih warna ${c}`}
                       aria-pressed={selected}
                       className={cn(
-                        "w-9 h-9 rounded-full transition-all flex items-center justify-center border border-black/5",
+                        "w-9 h-9 rounded-sm transition-all flex items-center justify-center border border-black/5",
                         selected
-                          ? "ring-2 ring-offset-2 ring-offset-background ring-foreground scale-110"
+                          ? "ring-2 ring-offset-2 ring-offset-background ring-foreground"
                           : "hover:scale-105"
                       )}
                       style={{ backgroundColor: c }}
@@ -360,11 +362,11 @@ export function ProfileView() {
               </p>
             </div>
 
-            <Separator className="mb-5" />
+            <Separator className="mb-5 bg-border" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name">Nama Penuh</Label>
+                <Label className="eyebrow" htmlFor="name">Nama Penuh</Label>
                 <Input
                   id="name"
                   value={edit.name}
@@ -372,6 +374,7 @@ export function ProfileView() {
                   onChange={(e) =>
                     setEdit((s) => ({ ...s, name: e.target.value }))
                   }
+                  className="rounded-sm"
                 />
                 {!isGM && (
                   <p className="text-[11px] text-muted-foreground">
@@ -380,17 +383,18 @@ export function ProfileView() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="position">Jawatan</Label>
+                <Label className="eyebrow" htmlFor="position">Jawatan</Label>
                 <Input
                   id="position"
                   value={edit.position}
                   onChange={(e) =>
                     setEdit((s) => ({ ...s, position: e.target.value }))
                   }
+                  className="rounded-sm"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="hours">Jam Bekerja / Minggu</Label>
+                <Label className="eyebrow" htmlFor="hours">Jam Bekerja / Minggu</Label>
                 <Input
                   id="hours"
                   type="number"
@@ -404,7 +408,7 @@ export function ProfileView() {
                       weeklyHours: Math.max(1, Number(e.target.value) || 0),
                     }))
                   }
-                  className="tabular-nums"
+                  className="tabular-nums num-display rounded-sm"
                 />
                 {!isGM && (
                   <p className="text-[11px] text-muted-foreground">
@@ -413,7 +417,7 @@ export function ProfileView() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="startDate">Tarikh Mula Bekerja</Label>
+                <Label className="eyebrow" htmlFor="startDate">Tarikh Mula Bekerja</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -422,6 +426,7 @@ export function ProfileView() {
                   onChange={(e) =>
                     setEdit((s) => ({ ...s, startDate: e.target.value }))
                   }
+                  className="tabular-nums rounded-sm"
                 />
                 {!isGM && (
                   <p className="text-[11px] text-muted-foreground">
@@ -436,9 +441,11 @@ export function ProfileView() {
 
       {/* GM: staff list quick-edit */}
       {isGM && !isLoading && (
-        <Card className="p-4 lg:p-6">
+        <Card className="p-4 lg:p-6 card-flat rounded-md">
           <SectionHeader
             title="Senarai Staf"
+            eyebrow="Pengguna"
+            index="02"
             subtitle={`${filteredStaff.length} staf`}
             icon={UserIcon}
             action={
@@ -448,7 +455,7 @@ export function ProfileView() {
                   placeholder="Cari staf..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="pl-8 h-8 w-44 sm:w-56"
+                  className="pl-8 h-8 w-44 sm:w-56 rounded-sm"
                   aria-label="Cari staf"
                 />
               </div>
@@ -472,15 +479,15 @@ export function ProfileView() {
                 return (
                   <div
                     key={u.id}
-                    className="rounded-lg border border-border bg-background p-3"
+                    className="rounded-sm border border-border bg-background p-3 card-flat"
                   >
                     <div className="flex items-start gap-3">
                       <Avatar
-                        className="w-10 h-10 shrink-0"
+                        className="w-10 h-10 shrink-0 rounded-sm"
                         style={{ backgroundColor: e.avatarColor }}
                       >
                         <AvatarFallback
-                          className="text-white text-xs font-semibold"
+                          className="text-white text-xs font-semibold rounded-sm"
                           style={{ backgroundColor: e.avatarColor }}
                         >
                           {initials(u.name)}
@@ -488,7 +495,7 @@ export function ProfileView() {
                       </Avatar>
                       <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                         <div>
-                          <Label className="text-[11px] text-muted-foreground">
+                          <Label className="eyebrow">
                             Nama
                           </Label>
                           <Input
@@ -499,11 +506,11 @@ export function ProfileView() {
                                 [u.id]: { ...e, name: ev.target.value },
                               }))
                             }
-                            className="h-8 text-sm"
+                            className="h-8 text-sm rounded-sm"
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-muted-foreground">
+                          <Label className="eyebrow">
                             Jawatan
                           </Label>
                           <Input
@@ -514,11 +521,11 @@ export function ProfileView() {
                                 [u.id]: { ...e, position: ev.target.value },
                               }))
                             }
-                            className="h-8 text-sm"
+                            className="h-8 text-sm rounded-sm"
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-muted-foreground">
+                          <Label className="eyebrow">
                             Jam / Minggu
                           </Label>
                           <Input
@@ -538,11 +545,11 @@ export function ProfileView() {
                                 },
                               }))
                             }
-                            className="h-8 text-sm tabular-nums"
+                            className="h-8 text-sm tabular-nums rounded-sm"
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-muted-foreground">
+                          <Label className="eyebrow">
                             Warna
                           </Label>
                           <div className="flex flex-wrap gap-1.5 pt-1">
@@ -562,9 +569,9 @@ export function ProfileView() {
                                     }))
                                   }
                                   className={cn(
-                                    "w-5 h-5 rounded-full border border-black/5 transition-transform",
+                                    "w-5 h-5 rounded-sm border border-black/5 transition-transform",
                                     selected
-                                      ? "ring-2 ring-offset-1 ring-offset-background ring-foreground scale-110"
+                                      ? "ring-2 ring-offset-1 ring-offset-background ring-foreground"
                                       : "hover:scale-110"
                                   )}
                                   style={{ backgroundColor: c }}
@@ -577,6 +584,7 @@ export function ProfileView() {
                       <Button
                         size="sm"
                         variant={dirty ? "default" : "outline"}
+                        className="rounded-sm"
                         disabled={!dirty || saving}
                         onClick={() => saveUser(u.id, e, false)}
                       >
@@ -605,18 +613,20 @@ function InfoRow({
   icon: Icon,
   label,
   value,
+  last,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
+  last?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-muted-foreground text-xs">
+    <div className={cn("flex items-center justify-between gap-3 py-2.5", !last && "hairline-b border-border")}>
+      <dt className="flex items-center gap-2 text-muted-foreground text-xs eyebrow">
         <Icon className="w-3.5 h-3.5" />
         {label}
       </dt>
-      <dd className="font-medium text-foreground text-sm truncate text-right max-w-[60%]">
+      <dd className="font-medium text-foreground text-sm truncate text-right max-w-[60%] tabular-nums">
         {value}
       </dd>
     </div>
@@ -626,24 +636,24 @@ function InfoRow({
 function ProfileSkeleton() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <Card className="p-6 space-y-4">
-        <div className="w-24 h-24 mx-auto rounded-full bg-muted animate-pulse" />
+      <Card className="p-6 space-y-4 card-flat rounded-md">
+        <div className="w-24 h-24 mx-auto rounded-sm bg-muted animate-pulse" />
         <div className="h-4 w-32 mx-auto bg-muted rounded animate-pulse" />
         <div className="h-3 w-20 mx-auto bg-muted/70 rounded animate-pulse" />
         <div className="h-px bg-border my-2" />
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-4 bg-muted/60 rounded animate-pulse" />
+            <div key={i} className="h-4 bg-muted/60 rounded-sm animate-pulse" />
           ))}
         </div>
       </Card>
-      <Card className="lg:col-span-2 p-6 space-y-4">
+      <Card className="lg:col-span-2 p-6 space-y-4 card-flat rounded-md">
         <div className="h-5 w-32 bg-muted rounded animate-pulse" />
-        <div className="h-10 bg-muted/60 rounded animate-pulse" />
+        <div className="h-10 bg-muted/60 rounded-sm animate-pulse" />
         <div className="h-px bg-border my-2" />
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 bg-muted/60 rounded animate-pulse" />
+            <div key={i} className="h-16 bg-muted/60 rounded-sm animate-pulse" />
           ))}
         </div>
       </Card>

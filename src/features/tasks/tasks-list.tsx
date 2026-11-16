@@ -57,8 +57,8 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
 
   if (isLoading) {
     return (
-      <Card className="p-4 space-y-2">
-        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+      <Card className="p-4 space-y-2 card-flat rounded-md">
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-sm" />)}
       </Card>
     );
   }
@@ -66,18 +66,18 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
   return (
     <div className="space-y-3">
       <TaskFiltersBar filters={filters} setFilters={setFilters} />
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden card-flat rounded-md">
         <div className="overflow-x-auto scroll-slim">
           <table className="w-full text-sm">
-            <thead className="bg-muted/40">
-              <tr className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                <th className="text-left font-medium py-2.5 px-3"><SortBtn label="Tugasan" k="title" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
-                <th className="text-left font-medium py-2.5 px-3 hidden md:table-cell"><SortBtn label="Penerima" k="assignee" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
-                <th className="text-left font-medium py-2.5 px-3 hidden lg:table-cell">Kategori</th>
-                <th className="text-left font-medium py-2.5 px-3 hidden sm:table-cell">Keutamaan</th>
-                <th className="text-left font-medium py-2.5 px-3">Status</th>
-                <th className="text-left font-medium py-2.5 px-3"><SortBtn label="Tarikh Akhir" k="dueDate" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
-                <th className="py-2.5 px-3"></th>
+            <thead>
+              <tr className="eyebrow border-b border-border bg-muted/30">
+                <th className="text-left font-semibold py-2 px-3"><SortBtn label="Tugasan" k="title" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
+                <th className="text-left font-semibold py-2 px-3 hidden md:table-cell"><SortBtn label="Penerima" k="assignee" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
+                <th className="text-left font-semibold py-2 px-3 hidden lg:table-cell">Kategori</th>
+                <th className="text-left font-semibold py-2 px-3 hidden sm:table-cell">Keutamaan</th>
+                <th className="text-left font-semibold py-2 px-3">Status</th>
+                <th className="text-left font-semibold py-2 px-3"><SortBtn label="Tarikh Akhir" k="dueDate" sortKey={sortKey} sortDir={sortDir} onSort={(k, d) => { setSortKey(k); setSortDir(d); }} /></th>
+                <th className="py-2 px-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -94,17 +94,20 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
                 const prioMeta = PRIORITY_META[t.priority as string];
                 const statusMeta = TASK_STATUS_META[t.status as string];
                 return (
-                  <tr key={t.id} className="border-t border-border/50 hover:bg-muted/30 transition-colors group">
+                  <tr key={t.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors group">
                     <td className="py-3 px-3">
                       <button onClick={() => onOpenTask(t.id)} className="text-left">
                         <div className="font-medium text-sm group-hover:text-accent line-clamp-1">{t.title}</div>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-1">
                           {t.progress > 0 && t.status !== "Selesai" && (
-                            <div className="h-1 w-16 rounded-full bg-muted overflow-hidden">
-                              <div className="h-full bg-accent" style={{ width: `${t.progress}%` }} />
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-1 w-16 bg-muted overflow-hidden rounded-sm">
+                                <div className="h-full bg-accent" style={{ width: `${t.progress}%` }} />
+                              </div>
+                              <span className="text-[9px] text-muted-foreground tabular-nums">{t.progress}%</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
                             {t.links && t.links.length > 0 && <Paperclip className="w-2.5 h-2.5" />}
                             {t.blockers && t.blockers.some((b) => b.status === "Terbuka") && <AlertTriangle className="w-2.5 h-2.5 text-status-danger" />}
                             {t.complexity > 1 && <span className="text-[9px]">C{t.complexity}</span>}
@@ -115,8 +118,8 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
                     <td className="py-3 px-3 hidden md:table-cell">
                       {t.assignee && (
                         <div className="flex items-center gap-2">
-                          <Avatar className="w-6 h-6">
-                            <AvatarFallback style={{ backgroundColor: t.assignee.avatarColor }} className="text-white text-[8px] font-semibold">{initials(t.assignee.name)}</AvatarFallback>
+                          <Avatar className="w-6 h-6 rounded-sm">
+                            <AvatarFallback style={{ backgroundColor: t.assignee.avatarColor, borderRadius: 2 }} className="text-white text-[8px] font-semibold">{initials(t.assignee.name)}</AvatarFallback>
                           </Avatar>
                           <div className="text-xs">
                             <div className="font-medium truncate max-w-[100px]">{t.assignee.name}</div>
@@ -131,16 +134,16 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
                       </span>
                     </td>
                     <td className="py-3 px-3 hidden sm:table-cell">
-                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", prioMeta?.bg, prioMeta?.text)}>{t.priority}</span>
+                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded-sm font-medium border tabular-nums", prioMeta?.bg, prioMeta?.text, prioMeta?.border)}>{t.priority}</span>
                     </td>
                     <td className="py-3 px-3">
-                      <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-md", statusMeta?.bg, statusMeta?.text)}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full", statusMeta?.dot)} />
+                      <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-sm border", statusMeta?.bg, statusMeta?.text, statusMeta?.border)}>
+                        <span className={cn("w-1.5 h-1.5 rounded-sm", statusMeta?.dot)} />
                         {t.status}
                       </span>
                     </td>
                     <td className="py-3 px-3">
-                      <div className={cn("text-xs inline-flex items-center gap-1", overdue ? "text-status-danger font-medium" : daysLeft <= 3 && t.status !== "Selesai" ? "text-status-warning" : "text-muted-foreground")}>
+                      <div className={cn("text-xs inline-flex items-center gap-1 tabular-nums", overdue ? "text-status-danger font-medium" : daysLeft <= 3 && t.status !== "Selesai" ? "text-status-warning" : "text-muted-foreground")}>
                         <Clock className="w-3 h-3" />
                         {formatDate(t.extendedDueDate || t.dueDate, { day: "2-digit", month: "short" })}
                         {overdue && <span className="text-[9px]">({Math.abs(daysLeft)}h lewat)</span>}
@@ -148,11 +151,11 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
                     </td>
                     <td className="py-3 px-3 text-right">
                       <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditTask(t.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm" onClick={() => onEditTask(t.id)} aria-label="Edit">
                           <Pencil className="w-3 h-3" />
                         </Button>
                         {user.role === "GM" && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-status-danger hover:text-status-danger" onClick={() => setDeleteId(t.id)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-status-danger hover:text-status-danger" onClick={() => setDeleteId(t.id)} aria-label="Padam">
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         )}
@@ -167,7 +170,7 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Padam Tugasan?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -175,8 +178,8 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-status-danger text-white hover:bg-status-danger/90">Padam</AlertDialogAction>
+            <AlertDialogCancel className="rounded-sm">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-status-danger text-white hover:bg-status-danger/90 rounded-sm">Padam</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -186,7 +189,7 @@ export function TasksList({ onOpenTask, onEditTask }: { onOpenTask: (id: string)
 
 function SortBtn({ label, k, sortKey, sortDir, onSort }: { label: string; k: string; sortKey: string; sortDir: "asc" | "desc"; onSort: (k: string, d: "asc" | "desc") => void }) {
   return (
-    <button onClick={() => onSort(k, sortKey === k && sortDir === "asc" ? "desc" : "asc")} className="inline-flex items-center gap-1 hover:text-foreground">
+    <button onClick={() => onSort(k, sortKey === k && sortDir === "asc" ? "desc" : "asc")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
       {label}
       {sortKey === k ? (sortDir === "asc" ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />) : null}
     </button>
@@ -203,33 +206,38 @@ function TaskFiltersBar({ filters, setFilters }: { filters: Record<string, strin
     enabled: user.role === "GM",
   });
   return (
-    <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") setFilters({ ...filters, search }); }}
-        placeholder="Cari tugasan..."
-        className="h-8 px-2 text-xs rounded border border-input bg-background flex-1 min-w-[140px]"
-      />
-      <select value={filters.status || "all"} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="h-8 px-2 text-xs rounded border border-input bg-background">
-        <option value="all">Semua Status</option>
-        {Object.keys(TASK_STATUS_META).map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
-      <select value={filters.category || "all"} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="h-8 px-2 text-xs rounded border border-input bg-background">
-        <option value="all">Semua Kategori</option>
-        {Object.keys(CATEGORY_META).map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>
-      <select value={filters.priority || "all"} onChange={(e) => setFilters({ ...filters, priority: e.target.value })} className="h-8 px-2 text-xs rounded border border-input bg-background">
-        <option value="all">Semua Keutamaan</option>
-        {Object.keys(PRIORITY_META).map((p) => <option key={p} value={p}>{p}</option>)}
-      </select>
-      {user.role === "GM" && (
-        <select value={filters.assigneeId || "all"} onChange={(e) => setFilters({ ...filters, assigneeId: e.target.value })} className="h-8 px-2 text-xs rounded border border-input bg-background">
-          <option value="all">Semua Staf</option>
-          {staffData?.users.filter((u) => u.role === "STAF").map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+    <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-md card-flat">
+      <div className="flex items-center gap-1.5 flex-1 min-w-[160px]">
+        <span className="eyebrow shrink-0 hidden sm:inline">Cari</span>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") setFilters({ ...filters, search }); }}
+          placeholder="Cari tugasan..."
+          className="h-8 px-2 text-xs rounded-sm border border-input bg-background w-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={filters.status || "all"} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="h-8 px-2 text-xs rounded-sm border border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <option value="all">Semua Status</option>
+          {Object.keys(TASK_STATUS_META).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-      )}
-      <button onClick={() => { setSearch(""); setFilters({}); }} className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">Reset</button>
+        <select value={filters.category || "all"} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="h-8 px-2 text-xs rounded-sm border border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <option value="all">Semua Kategori</option>
+          {Object.keys(CATEGORY_META).map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={filters.priority || "all"} onChange={(e) => setFilters({ ...filters, priority: e.target.value })} className="h-8 px-2 text-xs rounded-sm border border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+          <option value="all">Semua Keutamaan</option>
+          {Object.keys(PRIORITY_META).map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
+        {user.role === "GM" && (
+          <select value={filters.assigneeId || "all"} onChange={(e) => setFilters({ ...filters, assigneeId: e.target.value })} className="h-8 px-2 text-xs rounded-sm border border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <option value="all">Semua Staf</option>
+            {staffData?.users.filter((u) => u.role === "STAF").map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        )}
+        <button onClick={() => { setSearch(""); setFilters({}); }} className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground rounded-sm border border-transparent hover:border-border transition-colors">Reset</button>
+      </div>
     </div>
   );
 }
