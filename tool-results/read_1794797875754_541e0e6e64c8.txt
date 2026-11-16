@@ -1,0 +1,1510 @@
+     1→**DOKUMEN KEPERLUAN PRODUK (PRD)**
+     2→
+     3→**EDUOASIS TASK360**
+     4→
+     5→Sistem Pemantauan Prestasi Staf & Tugasan
+     6→
+     7→Disediakan untuk: General Manager, Al Amin Edu Oasis
+     8→
+     9→Jenis organisasi: Penyedia Latihan & Perundingan
+    10→
+    11→Platform pembangunan: z.ai (model GLM 5.2) -- React
+    12→
+    13→  -----------------------------------------------------------------------
+    14→  **Versi**            1.0 (Draf Untuk Kelulusan)
+    15→  -------------------- --------------------------------------------------
+    16→  **Tarikh**           16 November 2026
+    17→
+    18→  **Status**           Draf -- menunggu semakan & kelulusan General
+    19→                       Manager
+    20→
+    21→  **Pemilik Produk**   General Manager, Al Amin Edu Oasis
+    22→
+    23→  **Klasifikasi**      Sulit -- Kegunaan Dalaman
+    24→  -----------------------------------------------------------------------
+    25→
+    26→**Kandungan**
+    27→
+    28→# 1. Ringkasan Eksekutif
+    29→
+    30→EDUOASIS TASK360 ialah aplikasi web dalaman yang membolehkan General
+    31→Manager (GM) Al Amin Edu Oasis memberi tugasan, menjejak kemajuan kerja
+    32→dan menilai prestasi enam (6) orang staf secara objektif, telus dan
+    33→berasaskan data. Sistem ini menukar maklumat kerja harian kepada skor
+    34→prestasi merentasi enam dimensi utama:
+    35→
+    36→-   Task Completion (Penyiapan Tugasan)
+    37→
+    38→-   Timeliness (Ketepatan Masa)
+    39→
+    40→-   Work Quality (Kualiti Kerja)
+    41→
+    42→-   Initiative & Problem Solving (Inisiatif & Penyelesaian Masalah)
+    43→
+    44→-   Communication & Accountability (Komunikasi & Akauntabiliti)
+    45→
+    46→-   Productivity & Workload (Produktiviti & Beban Kerja)
+    47→
+    48→Versi 1.0 dibina sebagai prototaip berfungsi sepenuhnya menggunakan
+    49→React dan pangkalan data dummy (data contoh), dengan lapisan data yang
+    50→direka supaya boleh ditukar kepada pangkalan data sebenar pada fasa
+    51→seterusnya tanpa mengubah antara muka pengguna.
+    52→
+    53→  -----------------------------------------------------------------------
+    54→  Nilai utama: GM dapat melihat dalam satu skrin siapa yang sedang
+    55→  membawa beban berlebihan, tugasan mana yang berisiko lewat, dan staf
+    56→  mana yang menunjukkan inisiatif -- sebelum masalah menjadi isu.
+    57→  -----------------------------------------------------------------------
+    58→
+    59→  -----------------------------------------------------------------------
+    60→
+    61→# 2. Latar Belakang & Pernyataan Masalah
+    62→
+    63→## 2.1 Latar Belakang
+    64→
+    65→Al Amin Edu Oasis menyediakan latihan dan perundingan. Kerja organisasi
+    66→ini melibatkan pelbagai aktiviti serentak seperti penyediaan modul,
+    67→penyelarasan program latihan, pemasaran, perhubungan klien, pentadbiran
+    68→dan kewangan. Dengan pasukan kecil seramai enam orang, setiap tugasan
+    69→yang lewat atau berkualiti rendah memberi kesan langsung kepada klien
+    70→dan pendapatan.
+    71→
+    72→## 2.2 Masalah Semasa
+    73→
+    74→-   **Pemantauan tidak berpusat:** Tugasan diberi melalui WhatsApp,
+    75→    e-mel dan lisan; GM sukar mendapat gambaran menyeluruh.
+    76→
+    77→-   **Penilaian bersifat subjektif:** Penilaian prestasi bergantung pada
+    78→    ingatan dan tanggapan, bukan data yang boleh diaudit.
+    79→
+    80→-   **Beban kerja tidak kelihatan:** Sukar mengenal pasti staf yang
+    81→    terlalu sibuk atau kurang diagihkan tugas.
+    82→
+    83→-   **Tiada rekod inisiatif:** Sumbangan di luar tugasan rasmi tidak
+    84→    direkodkan dan kurang dihargai.
+    85→
+    86→-   **Pelaporan memakan masa:** Laporan prestasi bulanan/suku tahunan
+    87→    disediakan secara manual.
+    88→
+    89→## 2.3 Peluang
+    90→
+    91→Satu sistem ringan yang menggabungkan pengurusan tugasan dan penilaian
+    92→prestasi dalam satu platform, dengan kaedah pengiraan skor yang jelas
+    93→dan boleh dijelaskan kepada staf, akan meningkatkan keadilan,
+    94→akauntabiliti dan produktiviti pasukan.
+    95→
+    96→# 3. Matlamat, Objektif & Metrik Kejayaan
+    97→
+    98→## 3.1 Matlamat Produk
+    99→
+   100→Menyediakan GM satu alat tunggal untuk memantau kemajuan kerja dan
+   101→menilai prestasi staf secara berterusan, adil dan berasaskan data.
+   102→
+   103→## 3.2 Objektif & Petunjuk Kejayaan
+   104→
+   105→  ------------------------------------------------------------------------------
+   106→  **Bil.**   **Objektif**          **Metrik Kejayaan**        **Sasaran**
+   107→  ---------- --------------------- -------------------------- ------------------
+   108→  O1         Memusatkan semua      Peratus tugasan direkod    ≥ 95% dalam 1
+   109→             tugasan               dalam sistem               bulan selepas
+   110→                                                              pelancaran
+   111→
+   112→  O2         Meningkatkan          Kadar tugasan siap         Meningkat ≥ 15%
+   113→             ketepatan masa        pada/sebelum tarikh akhir  dalam 1 suku tahun
+   114→
+   115→  O3         Penilaian objektif    Peratus penilaian staf     100% untuk dimensi
+   116→                                   yang dijana daripada data  automatik
+   117→                                   sistem                     
+   118→
+   119→  O4         Mengimbangi beban     Bilangan staf dalam status 0 staf
+   120→             kerja                 \'Beban Berlebihan\' \>2   
+   121→                                   minggu berturut-turut      
+   122→
+   123→  O5         Menjimatkan masa      Masa menyediakan laporan   Dari berjam-jam
+   124→             pelaporan             prestasi bulanan           kepada \< 5 minit
+   125→
+   126→  O6         Penerimaan pengguna   Skor kepuasan GM & staf    ≥ 4.0
+   127→                                   (skala 1--5)               
+   128→  ------------------------------------------------------------------------------
+   129→
+   130→## 3.3 Prinsip Reka Bentuk
+   131→
+   132→-   **Telus:** Staf boleh melihat skor dan formula pengiraan mereka
+   133→    sendiri.
+   134→
+   135→-   **Mudah:** Kemas kini tugasan mengambil kurang daripada 30 saat.
+   136→
+   137→-   **Boleh dijelaskan:** Setiap skor boleh dijejak kepada data asal
+   138→    (drill-down).
+   139→
+   140→-   **Membina, bukan menghukum:** Sistem menonjolkan peluang
+   141→    pembangunan, bukan sekadar kesalahan.
+   142→
+   143→# 4. Skop Produk
+   144→
+   145→## 4.1 Dalam Skop (Versi 1.0 -- Prototaip)
+   146→
+   147→-   Pengurusan tugasan (cipta, tugaskan, kemas kini status, keutamaan,
+   148→    tarikh akhir, lampiran pautan)
+   149→
+   150→-   Papan Kanban dan paparan senarai
+   151→
+   152→-   Rekod log masa/anggaran jam kerja
+   153→
+   154→-   Modul penilaian kualiti oleh GM selepas tugasan siap
+   155→
+   156→-   Rekod inisiatif & penyelesaian masalah
+   157→
+   158→-   Komen/kemas kini tugasan dan pelaporan halangan (blocker)
+   159→
+   160→-   Enam dimensi prestasi dengan skor automatik dan pemberat boleh ubah
+   161→
+   162→-   Papan pemuka GM dan papan pemuka Staf
+   163→
+   164→-   Laporan prestasi bulanan/suku tahunan dan eksport PDF/CSV
+   165→
+   166→-   Notifikasi dalam aplikasi
+   167→
+   168→-   Pangkalan data dummy dengan 7 pengguna (1 GM + 6 staf) dan data
+   169→    contoh 3 bulan
+   170→
+   171→-   Butang \'Set Semula Data Demo\'
+   172→
+   173→## 4.2 Di Luar Skop (Fasa Kemudian)
+   174→
+   175→-   Pangkalan data & pengesahan sebenar (backend)
+   176→
+   177→-   Integrasi WhatsApp, e-mel, Google Calendar atau kewangan/HR
+   178→
+   179→-   Aplikasi mudah alih asli (iOS/Android)
+   180→
+   181→-   Pengiraan gaji, bonus atau tuntutan
+   182→
+   183→-   Penilaian 360° oleh rakan sekerja
+   184→
+   185→-   Ramalan prestasi menggunakan AI
+   186→
+   187→## 4.3 Andaian & Kebergantungan
+   188→
+   189→-   Kesemua 6 staf dan GM mempunyai akses komputer/telefon pintar dengan
+   190→    pelayar moden.
+   191→
+   192→-   GM bersedia mengesahkan kualiti dan inisiatif secara berkala
+   193→    (mingguan).
+   194→
+   195→-   Pemberat dan sasaran skor dalam dokumen ini adalah cadangan awal dan
+   196→    boleh dilaras di modul Tetapan.
+   197→
+   198→-   Antara muka dalam Bahasa Malaysia (lalai) dengan pilihan Bahasa
+   199→    Inggeris.
+   200→
+   201→# 5. Pengguna & Peranan
+   202→
+   203→  --------------------------------------------------------------------------------
+   204→  **Peranan**   **Penerangan**              **Bilangan**   **Keperluan Utama**
+   205→  ------------- --------------------------- -------------- -----------------------
+   206→  **GM          Pemilik sistem; memberi     1              Gambaran keseluruhan,
+   207→  (Admin)**     tugasan, menilai, melihat                  penilaian, laporan,
+   208→                semua data dan laporan                     tetapan
+   209→
+   210→  **Staf**      Menerima tugasan, mengemas  6              Tugasan saya, log masa,
+   211→                kini kemajuan, merekod                     skor prestasi saya
+   212→                inisiatif                                  
+   213→  --------------------------------------------------------------------------------
+   214→
+   215→## 5.1 Matriks Kebenaran
+   216→
+   217→  -----------------------------------------------------------------------
+   218→  **Fungsi**                         **GM**          **Staf**
+   219→  ---------------------------------- --------------- --------------------
+   220→  Cipta / tugaskan / padam tugasan   ✔               --
+   221→
+   222→  Cipta tugasan sendiri (peribadi)   ✔               ✔
+   223→
+   224→  Kemas kini status tugasan sendiri  ✔               ✔
+   225→
+   226→  Lihat semua tugasan pasukan        ✔               Baca sahaja (tajuk &
+   227→                                                     status)
+   228→
+   229→  Beri penilaian kualiti             ✔               --
+   230→
+   231→  Rekod inisiatif                    ✔ (sah)         Hantar; GM
+   232→                                                     mengesahkan
+   233→
+   234→  Lihat skor prestasi                Semua staf      Skor sendiri sahaja
+   235→
+   236→  Ubah pemberat & tetapan            ✔               --
+   237→
+   238→  Eksport laporan                    ✔               Laporan sendiri
+   239→
+   240→  Lihat log audit                    ✔               --
+   241→  -----------------------------------------------------------------------
+   242→
+   243→## 5.2 Persona Ringkas
+   244→
+   245→-   **GM -- \'Puan/Tuan Pengurus\':** Sibuk, perlukan jawapan pantas:
+   246→    siapa lewat, siapa tertekan, siapa cemerlang. Mahu laporan siap
+   247→    pakai untuk mesyuarat.
+   248→
+   249→-   **Staf -- \'Eksekutif Program\':** Mahu tahu apa yang perlu dibuat
+   250→    hari ini, mahu usaha dan inisiatif diiktiraf dengan adil, dan tidak
+   251→    mahu proses pelaporan yang menyusahkan.
+   252→
+   253→# 6. Kerangka Penilaian Prestasi (6 Dimensi)
+   254→
+   255→Skor prestasi keseluruhan (0--100) dikira sebagai purata berpemberat
+   256→bagi enam dimensi. Pemberat di bawah ialah cadangan lalai dan boleh
+   257→diubah oleh GM di modul Tetapan (jumlah mesti 100%).
+   258→
+   259→  --------------------------------------------------------------------------
+   260→  **Dimensi**               **Pemberat   **Sumber Data**         **Jenis**
+   261→                            Lalai**                              
+   262→  ------------------------- ------------ ----------------------- -----------
+   263→  **1. Task Completion**    20%          Status tugasan          Automatik
+   264→
+   265→  **2. Timeliness**         15%          Tarikh akhir vs tarikh  Automatik
+   266→                                         siap                    
+   267→
+   268→  **3. Work Quality**       25%          Penilaian GM & kadar    Separa (GM)
+   269→                                         semakan semula          
+   270→
+   271→  **4. Initiative & Problem 10%          Rekod inisiatif         Separa (GM)
+   272→  Solving**                              disahkan GM             
+   273→
+   274→  **5. Communication &      15%          Kekerapan kemas kini,   Campuran
+   275→  Accountability**                       masa respons, pelaporan 
+   276→                                         halangan, rating GM     
+   277→
+   278→  **6. Productivity &       15%          Log jam, daya           Automatik
+   279→  Workload**                             pemprosesan             
+   280→                                         (throughput), utilisasi 
+   281→
+   282→  **Jumlah**                100%                                 
+   283→  --------------------------------------------------------------------------
+   284→
+   285→## 6.1 Task Completion -- Penyiapan Tugasan (20%)
+   286→
+   287→Mengukur sejauh mana tugasan yang diberi berjaya disiapkan dalam tempoh
+   288→penilaian.
+   289→
+   290→-   **Metrik:** Kadar Penyiapan = (Tugasan Selesai ÷ Tugasan Sepatutnya
+   291→    Selesai dalam Tempoh) × 100. Tugasan \'Dibatalkan oleh GM\'
+   292→    dikecualikan.
+   293→
+   294→-   **Metrik sokongan:** Bilangan tugasan selesai, tertunggak (overdue),
+   295→    dan dalam proses.
+   296→
+   297→-   **Skor:** Skor_TC = Kadar Penyiapan (maksimum 100).
+   298→
+   299→## 6.2 Timeliness -- Ketepatan Masa (15%)
+   300→
+   301→Mengukur sama ada tugasan disiapkan pada atau sebelum tarikh akhir.
+   302→
+   303→-   **Metrik:** Kadar Tepat Masa (OTR) = (Tugasan Siap Pada/Sebelum
+   304→    Tarikh Akhir ÷ Jumlah Tugasan Siap) × 100.
+   305→
+   306→-   **Penalti kelewatan:** Purata hari lewat bagi tugasan yang lewat × 5
+   307→    mata.
+   308→
+   309→-   **Skor:** Skor_TM = maks(0, OTR − Penalti). Tugasan yang dilanjutkan
+   310→    dengan kelulusan GM tidak dikira lewat.
+   311→
+   312→## 6.3 Work Quality -- Kualiti Kerja (25%)
+   313→
+   314→Mengukur kualiti hasil kerja berdasarkan penilaian GM dan keperluan
+   315→semakan semula.
+   316→
+   317→-   **Rating GM:** Skala 1--5 pada setiap tugasan siap, merangkumi
+   318→    Ketepatan, Kelengkapan, Profesionalisme dan Mengikut Spesifikasi
+   319→    (purata empat kriteria).
+   320→
+   321→-   **Kadar Semakan Semula (Rework Rate):** (Tugasan dikembalikan untuk
+   322→    pembetulan ÷ Jumlah tugasan siap) × 100.
+   323→
+   324→-   **Skor:** Skor_WQ = 0.7 × (Purata Rating ÷ 5 × 100) + 0.3 × (100 −
+   325→    Kadar Semakan Semula).
+   326→
+   327→## 6.4 Initiative & Problem Solving -- Inisiatif & Penyelesaian Masalah (10%)
+   328→
+   329→Menghargai sumbangan di luar tugasan asal: cadangan penambahbaikan,
+   330→penyelesaian masalah klien, automasi proses dan sebagainya.
+   331→
+   332→  --------------------------------------------------------------------------
+   333→  **Tahap        **Mata**   **Contoh**
+   334→  Impak**                   
+   335→  -------------- ---------- ------------------------------------------------
+   336→  Kecil          5          Menambah baik templat borang; menyelesaikan isu
+   337→                            kecil tanpa diarahkan
+   338→
+   339→  Sederhana      10         Mencadangkan & melaksanakan penambahbaikan
+   340→                            aliran kerja; menyelesaikan aduan klien
+   341→
+   342→  Besar          20         Mereka bentuk modul latihan baharu; menjimatkan
+   343→                            kos/masa yang ketara; memperoleh klien baharu
+   344→  --------------------------------------------------------------------------
+   345→
+   346→-   **Aliran:** Staf menghantar inisiatif → GM menyemak, mengesahkan dan
+   347→    menetapkan tahap impak → mata dikreditkan.
+   348→
+   349→-   **Skor:** Skor_IN = minimum(100, (Jumlah Mata Disahkan ÷ Sasaran
+   350→    Mata Tempoh) × 100). Sasaran lalai: 20 mata sebulan / 60 mata
+   351→    sesuku.
+   352→
+   353→## 6.5 Communication & Accountability -- Komunikasi & Akauntabiliti (15%)
+   354→
+   355→Mengukur keterbukaan staf dalam melaporkan kemajuan dan mengambil
+   356→tanggungjawab.
+   357→
+   358→  -------------------------------------------------------------------------
+   359→  **Komponen**       **Definisi**                              **Pemberat
+   360→                                                               Dalaman**
+   361→  ------------------ ----------------------------------------- ------------
+   362→  Pematuhan Kemas    Peratus tugasan aktif yang dikemas kini   30%
+   363→  Kini               sekurang-kurangnya sekali setiap 2 hari   
+   364→                     bekerja                                   
+   365→
+   366→  Respons dalam SLA  Peratus komen/permintaan GM dibalas dalam 30%
+   367→                     24 jam bekerja                            
+   368→
+   369→  Pelaporan Halangan Peratus halangan (blocker) dilaporkan     20%
+   370→  Awal               sekurang-kurangnya 2 hari sebelum tarikh  
+   371→                     akhir                                     
+   372→
+   373→  Rating             Penilaian GM (1--5) mengenai sikap        20%
+   374→  Akauntabiliti GM   bertanggungjawab & kerjasama              
+   375→  -------------------------------------------------------------------------
+   376→
+   377→-   **Skor:** Skor_CA = jumlah (komponen × pemberat dalaman); rating GM
+   378→    ditukar kepada skala 100.
+   379→
+   380→## 6.6 Productivity & Workload -- Produktiviti & Beban Kerja (15%)
+   381→
+   382→Mengukur output berbanding keupayaan dan memastikan beban kerja
+   383→seimbang.
+   384→
+   385→-   **Daya Pemprosesan (Throughput):** Jam anggaran tugasan siap ÷ Jam
+   386→    sasaran tempoh × 100 (had 100).
+   387→
+   388→-   **Utilisasi:** Jam dilog ÷ Jam tersedia (selepas tolak cuti & cuti
+   389→    umum) × 100.
+   390→
+   391→-   **Skor Utilisasi:** 75--90% = 100 mata; 60--74% atau 91--105% = 80
+   392→    mata; 45--59% atau 106--120% = 60 mata; di luar julat = 40 mata.
+   393→
+   394→-   **Skor:** Skor_PW = 0.5 × Throughput + 0.5 × Skor Utilisasi.
+   395→
+   396→**Penunjuk Beban Kerja (untuk GM, tidak dikira dalam skor):**
+   397→
+   398→  ------------------------------------------------------------------------
+   399→  **Status**        **Julat Utilisasi       **Tindakan Dicadangkan**
+   400→                    Tugasan Aktif\***       
+   401→  ----------------- ----------------------- ------------------------------
+   402→  Rendah            \< 60%                  Pertimbang menambah tugasan
+   403→
+   404→  Seimbang          60% -- 90%              Kekalkan
+   405→
+   406→  Tinggi            91% -- 110%             Pantau; elak tambah tugasan
+   407→                                            baharu
+   408→
+   409→  Beban Berlebihan  \> 110%                 Agih semula tugasan; amaran
+   410→                                            kepada GM
+   411→  ------------------------------------------------------------------------
+   412→
+   413→*\* Jumlah jam anggaran tugasan aktif yang ditetapkan ke atas staf ÷
+   414→kapasiti jam minggu itu.*
+   415→
+   416→## 6.7 Skor Keseluruhan & Gred
+   417→
+   418→**Skor Keseluruhan =** Σ (Skor Dimensi × Pemberat)
+   419→
+   420→  ------------------------------------------------------------------------
+   421→  **Skor**       **Gred**               **Maksud**
+   422→  -------------- ---------------------- ----------------------------------
+   423→  90 -- 100      A -- Cemerlang         Melebihi jangkaan secara konsisten
+   424→
+   425→  75 -- 89       B -- Baik              Memenuhi dan kerap melebihi
+   426→                                        jangkaan
+   427→
+   428→  60 -- 74       C -- Memuaskan         Memenuhi jangkaan asas
+   429→
+   430→  40 -- 59       D -- Perlu             Memerlukan bimbingan & pelan
+   431→                 Penambahbaikan         tindakan
+   432→
+   433→  \< 40          E -- Kritikal          Memerlukan campur tangan segera
+   434→  ------------------------------------------------------------------------
+   435→
+   436→  -----------------------------------------------------------------------
+   437→  Nota keadilan: Sistem memaparkan skor sebagai panduan perbincangan,
+   438→  bukan keputusan muktamad. Keputusan akhir mengenai penilaian prestasi
+   439→  kekal di tangan GM dan mesti mengambil kira konteks (cuti, kerja luar
+   440→  jangka, kerumitan tugasan). Tugasan boleh diberi \'Pemberat Kerumitan\'
+   441→  (1--3) supaya tugasan sukar dikira lebih tinggi.
+   442→  -----------------------------------------------------------------------
+   443→
+   444→  -----------------------------------------------------------------------
+   445→
+   446→# 7. Keperluan Fungsian
+   447→
+   448→Keutamaan menggunakan kaedah MoSCoW: M = Mesti ada, S = Sepatutnya ada,
+   449→C = Boleh ada.
+   450→
+   451→## 7.1 Pengesahan & Pengurusan Pengguna (AUTH)
+   452→
+   453→  ---------------------------------------------------------------------------------
+   454→  **ID**    **Keperluan**                                           **Keutamaan**
+   455→  --------- ------------------------------------------------------- ---------------
+   456→  AUTH-01   Log masuk dengan e-mel dan kata laluan (dummy) serta    M
+   457→            pilihan \'Log masuk pantas sebagai GM / sebagai Staf\'  
+   458→            untuk demo.                                             
+   459→
+   460→  AUTH-02   Kawalan akses berasaskan peranan (GM dan Staf) pada     M
+   461→            semua laluan dan komponen.                              
+   462→
+   463→  AUTH-03   Sesi pengguna disimpan; log keluar menamatkan sesi.     M
+   464→
+   465→  AUTH-04   GM boleh melihat dan mengedit profil staf (nama,        S
+   466→            jawatan, jam kerja mingguan, tarikh mula).              
+   467→  ---------------------------------------------------------------------------------
+   468→
+   469→## 7.2 Papan Pemuka (DASH)
+   470→
+   471→  ---------------------------------------------------------------------------------
+   472→  **ID**    **Keperluan**                                           **Keutamaan**
+   473→  --------- ------------------------------------------------------- ---------------
+   474→  DASH-01   Papan Pemuka GM: kad ringkasan (jumlah tugasan aktif,   M
+   475→            tertunggak, siap minggu ini, purata skor pasukan).      
+   476→
+   477→  DASH-02   Jadual kedudukan prestasi 6 staf dengan skor            M
+   478→            keseluruhan, gred dan trend (↑ ↓ →).                    
+   479→
+   480→  DASH-03   Carta radar 6 dimensi bagi setiap staf dan perbandingan M
+   481→            dengan purata pasukan.                                  
+   482→
+   483→  DASH-04   Peta haba beban kerja (staf × minggu) dengan status     M
+   484→            Rendah/Seimbang/Tinggi/Berlebihan.                      
+   485→
+   486→  DASH-05   Senarai \'Perlu Perhatian\': tugasan hampir/melepasi    M
+   487→            tarikh akhir, halangan terbuka, staf beban berlebihan.  
+   488→
+   489→  DASH-06   Papan Pemuka Staf: tugasan hari ini, tugasan            M
+   490→            tertunggak, skor sendiri, inisiatif terkini, maklum     
+   491→            balas GM.                                               
+   492→
+   493→  DASH-07   Penapis tempoh (minggu ini, bulan ini, suku ini,        M
+   494→            tersuai).                                               
+   495→  ---------------------------------------------------------------------------------
+   496→
+   497→## 7.3 Pengurusan Tugasan (TASK)
+   498→
+   499→  ---------------------------------------------------------------------------------
+   500→  **ID**    **Keperluan**                                           **Keutamaan**
+   501→  --------- ------------------------------------------------------- ---------------
+   502→  TASK-01   GM mencipta tugasan: tajuk, penerangan, penerima,       M
+   503→            kategori (Latihan, Perundingan, Pemasaran, Pentadbiran, 
+   504→            Sekolah Berlesen, Kewangan, Lain-lain), keutamaan       
+   505→            (Rendah/Sederhana/Tinggi/Segera), tarikh mula, tarikh   
+   506→            akhir, anggaran jam, pemberat kerumitan (1--3), pautan  
+   507→            lampiran.                                               
+   508→
+   509→  TASK-02   Status tugasan: Belum Mula → Dalam Proses → Menunggu    M
+   510→            Semakan → Selesai; tambahan: Disekat (Blocked) dan      
+   511→            Dibatalkan.                                             
+   512→
+   513→  TASK-03   Papan Kanban dengan seret-dan-lepas antara status;      M
+   514→            paparan senarai dengan isih dan tapis.                  
+   515→
+   516→  TASK-04   Staf mengemas kini status dan peratus kemajuan tugasan  M
+   517→            sendiri; menukar ke \'Menunggu Semakan\' apabila siap.  
+   518→
+   519→  TASK-05   GM meluluskan (Selesai) atau mengembalikan tugasan      M
+   520→            untuk semakan semula dengan nota; pemulangan menambah   
+   521→            kadar semakan semula.                                   
+   522→
+   523→  TASK-06   Subtugasan (checklist) dalam satu tugasan.              S
+   524→
+   525→  TASK-07   Permintaan lanjutan tarikh akhir oleh staf dengan       S
+   526→            sebab; GM lulus/tolak. Tugasan dilanjutkan tidak dikira 
+   527→            lewat.                                                  
+   528→
+   529→  TASK-08   Tugasan berulang (mingguan/bulanan) untuk kerja rutin.  C
+   530→
+   531→  TASK-09   Carian dan penapis berdasarkan penerima, status,        M
+   532→            kategori, keutamaan dan julat tarikh.                   
+   533→
+   534→  TASK-10   Sejarah perubahan setiap tugasan (siapa, bila, apa).    S
+   535→  ---------------------------------------------------------------------------------
+   536→
+   537→## 7.4 Log Masa & Beban Kerja (TIME)
+   538→
+   539→  ---------------------------------------------------------------------------------
+   540→  **ID**    **Keperluan**                                           **Keutamaan**
+   541→  --------- ------------------------------------------------------- ---------------
+   542→  TIME-01   Staf merekod jam kerja pada tugasan (input manual       M
+   543→            harian/mingguan).                                       
+   544→
+   545→  TIME-02   Pengiraan automatik utilisasi dan status beban kerja    M
+   546→            bagi setiap staf.                                       
+   547→
+   548→  TIME-03   Pengurusan kapasiti: tetapan jam kerja mingguan dan     S
+   549→            rekod cuti/cuti umum.                                   
+   550→
+   551→  TIME-04   Amaran apabila tugasan baharu ditetapkan kepada staf    S
+   552→            yang sudah \'Tinggi\' atau \'Beban Berlebihan\'.        
+   553→  ---------------------------------------------------------------------------------
+   554→
+   555→## 7.5 Penilaian Kualiti (QUAL)
+   556→
+   557→  ---------------------------------------------------------------------------------
+   558→  **ID**    **Keperluan**                                           **Keutamaan**
+   559→  --------- ------------------------------------------------------- ---------------
+   560→  QUAL-01   Borang penilaian GM pada tugasan siap: 4 kriteria       M
+   561→            (Ketepatan, Kelengkapan, Profesionalisme, Mengikut      
+   562→            Spesifikasi), skala 1--5 dan komen.                     
+   563→
+   564→  QUAL-02   Staf melihat maklum balas dan rating bagi tugasan       M
+   565→            mereka.                                                 
+   566→
+   567→  QUAL-03   Rating Akauntabiliti bulanan oleh GM (skala 1--5) bagi  M
+   568→            setiap staf.                                            
+   569→
+   570→  QUAL-04   Penilaian ditandakan \'tertunda\' jika tugasan siap     S
+   571→            melebihi 7 hari tanpa dinilai; peringatan kepada GM.    
+   572→  ---------------------------------------------------------------------------------
+   573→
+   574→## 7.6 Inisiatif & Penyelesaian Masalah (INIT)
+   575→
+   576→  ---------------------------------------------------------------------------------
+   577→  **ID**    **Keperluan**                                           **Keutamaan**
+   578→  --------- ------------------------------------------------------- ---------------
+   579→  INIT-01   Staf menghantar inisiatif: tajuk, penerangan,           M
+   580→            masalah/peluang, tindakan, hasil/impak, bukti (pautan). 
+   581→
+   582→  INIT-02   GM mengesahkan/menolak, menetapkan tahap impak          M
+   583→            (Kecil/Sederhana/Besar) dan memberi komen.              
+   584→
+   585→  INIT-03   Senarai \'Dinding Inisiatif\' pasukan sebagai           C
+   586→            pengiktirafan.                                          
+   587→  ---------------------------------------------------------------------------------
+   588→
+   589→## 7.7 Komunikasi & Akauntabiliti (COMM)
+   590→
+   591→  ---------------------------------------------------------------------------------
+   592→  **ID**    **Keperluan**                                           **Keutamaan**
+   593→  --------- ------------------------------------------------------- ---------------
+   594→  COMM-01   Komen berbenang pada setiap tugasan antara GM dan staf; M
+   595→            sebutan (@mention).                                     
+   596→
+   597→  COMM-02   Butang \'Laporkan Halangan\' dengan jenis halangan dan  M
+   598→            bantuan diperlukan; GM melihat halangan terbuka di      
+   599→            papan pemuka.                                           
+   600→
+   601→  COMM-03   Pengiraan automatik Pematuhan Kemas Kini dan Respons    M
+   602→            dalam SLA.                                              
+   603→
+   604→  COMM-04   Kemas kini harian ringkas (daily check-in): \'Apa       C
+   605→            dibuat semalam / hari ini / halangan\'.                 
+   606→  ---------------------------------------------------------------------------------
+   607→
+   608→## 7.8 Enjin Skor Prestasi (SCORE)
+   609→
+   610→  ----------------------------------------------------------------------------------
+   611→  **ID**     **Keperluan**                                           **Keutamaan**
+   612→  ---------- ------------------------------------------------------- ---------------
+   613→  SCORE-01   Mengira skor 6 dimensi dan skor keseluruhan mengikut    M
+   614→             formula Bahagian 6, secara dinamik bagi mana-mana       
+   615→             tempoh.                                                 
+   616→
+   617→  SCORE-02   Drill-down: klik pada skor untuk melihat tugasan/rekod  M
+   618→             yang menyumbang kepada skor.                            
+   619→
+   620→  SCORE-03   Pemberat dimensi, sasaran mata inisiatif dan had gred   M
+   621→             boleh dilaras GM (jumlah pemberat = 100%).              
+   622→
+   623→  SCORE-04   Paparan trend 6 bulan terakhir bagi setiap dimensi.     S
+   624→
+   625→  SCORE-05   Cadangan teks automatik (berasaskan peraturan) seperti  C
+   626→             \'Ketepatan masa menurun 12% -- semak punca\'.          
+   627→  ----------------------------------------------------------------------------------
+   628→
+   629→## 7.9 Laporan & Eksport (RPT)
+   630→
+   631→  --------------------------------------------------------------------------------
+   632→  **ID**   **Keperluan**                                           **Keutamaan**
+   633→  -------- ------------------------------------------------------- ---------------
+   634→  RPT-01   Laporan Prestasi Individu (bulanan/suku): skor, trend,  M
+   635→           tugasan, inisiatif, maklum balas.                       
+   636→
+   637→  RPT-02   Laporan Ringkasan Pasukan untuk mesyuarat pengurusan.   M
+   638→
+   639→  RPT-03   Eksport ke PDF dan CSV.                                 M
+   640→
+   641→  RPT-04   Ruang \'Catatan GM / Pelan Tindakan\' pada laporan      S
+   642→           individu.                                               
+   643→  --------------------------------------------------------------------------------
+   644→
+   645→## 7.10 Notifikasi (NOTIF)
+   646→
+   647→  ----------------------------------------------------------------------------------
+   648→  **ID**     **Keperluan**                                           **Keutamaan**
+   649→  ---------- ------------------------------------------------------- ---------------
+   650→  NOTIF-01   Notifikasi dalam aplikasi: tugasan baharu, tarikh akhir M
+   651→             hampir (H-2, H-0), tugasan dikembalikan, komen baharu,  
+   652→             halangan dilaporkan.                                    
+   653→
+   654→  NOTIF-02   Pusat notifikasi dengan status baca/belum baca.         M
+   655→
+   656→  NOTIF-03   Notifikasi e-mel/WhatsApp (fasa kemudian).              C
+   657→  ----------------------------------------------------------------------------------
+   658→
+   659→## 7.11 Tetapan & Data Demo (SET)
+   660→
+   661→  --------------------------------------------------------------------------------
+   662→  **ID**   **Keperluan**                                           **Keutamaan**
+   663→  -------- ------------------------------------------------------- ---------------
+   664→  SET-01   Halaman Tetapan GM: pemberat, sasaran, kategori         M
+   665→           tugasan, hari bekerja, cuti umum Malaysia.              
+   666→
+   667→  SET-02   Butang \'Set Semula Data Demo\' memulihkan data contoh  M
+   668→           asal.                                                   
+   669→
+   670→  SET-03   Log audit tindakan penting (cipta/padam tugasan, ubah   S
+   671→           pemberat, penilaian).                                   
+   672→
+   673→  SET-04   Pertukaran bahasa BM / English.                         C
+   674→  --------------------------------------------------------------------------------
+   675→
+   676→# 8. Keperluan Bukan Fungsian
+   677→
+   678→  ------------------------------------------------------------------------------
+   679→  **Kategori**              **Keperluan**
+   680→  ------------------------- ----------------------------------------------------
+   681→  **Prestasi**              Halaman utama dimuat \< 2 saat; interaksi UI \< 200
+   682→                            ms bagi data dummy; carta 3 bulan data dirender \< 1
+   683→                            saat.
+   684→
+   685→  **Kebolehgunaan**         Antara muka Bahasa Malaysia; maksimum 3 klik untuk
+   686→                            kemas kini tugasan; label dan mesej ralat yang
+   687→                            jelas.
+   688→
+   689→  **Responsif**             Berfungsi pada desktop (≥1280px), tablet dan telefon
+   690→                            pintar (≥360px).
+   691→
+   692→  **Kebolehaksesan**        Kontras warna WCAG AA; navigasi papan kekunci; label
+   693→                            ARIA pada kawalan utama.
+   694→
+   695→  **Keselamatan             Kawalan peranan di UI & lapisan data; tiada data
+   696→  (prototaip)**             sebenar atau peribadi dalam dummy DB; kata laluan
+   697→                            tidak disimpan dalam teks biasa dalam versi sebenar
+   698→                            (rancangan fasa 2: hashing + JWT/sesi).
+   699→
+   700→  **Privasi**               Staf hanya melihat data sendiri. Versi produksi
+   701→                            mesti mematuhi Akta Perlindungan Data Peribadi 2010
+   702→                            (PDPA) Malaysia dan dasar dalaman syarikat.
+   703→
+   704→  **Kebolehselenggaraan**   TypeScript; struktur modular mengikut ciri
+   705→                            (feature-based); ujian unit bagi enjin skor (liputan
+   706→                            ≥ 80%).
+   707→
+   708→  **Kebolehskalaan**        Lapisan repositori (repository pattern) supaya dummy
+   709→                            DB boleh digantikan dengan API/DB sebenar tanpa
+   710→                            mengubah komponen UI.
+   711→
+   712→  **Keserasian**            Chrome, Edge, Safari, Firefox (dua versi terkini).
+   713→
+   714→  **Kebolehpercayaan data** Data dummy dikekalkan antara muat semula (persisten)
+   715→                            dan boleh dipulihkan melalui set semula.
+   716→  ------------------------------------------------------------------------------
+   717→
+   718→# 9. Aliran Pengguna Utama
+   719→
+   720→## 9.1 Aliran GM: Memberi & Menilai Tugasan
+   721→
+   722→-   **Langkah 1:** GM log masuk dan melihat Papan Pemuka.
+   723→
+   724→-   **Langkah 2:** GM memilih \'Tugasan Baharu\', mengisi butiran dan
+   725→    menetapkan kepada staf. Sistem memaparkan status beban kerja staf
+   726→    tersebut.
+   727→
+   728→-   **Langkah 3:** Staf menerima notifikasi, mengubah status kepada
+   729→    \'Dalam Proses\' dan merekod jam kerja.
+   730→
+   731→-   **Langkah 4:** Jika ada halangan, staf menekan \'Laporkan
+   732→    Halangan\'; GM menerima notifikasi.
+   733→
+   734→-   **Langkah 5:** Staf menukar status kepada \'Menunggu Semakan\'.
+   735→
+   736→-   **Langkah 6:** GM menyemak hasil: Lulus (beri rating 1--5) atau
+   737→    Kembalikan (dengan nota).
+   738→
+   739→-   **Langkah 7:** Skor prestasi staf dikemas kini serta-merta.
+   740→
+   741→## 9.2 Aliran Staf: Merekod Inisiatif
+   742→
+   743→-   **Langkah 1:** Staf membuka \'Inisiatif\' dan memilih \'Hantar
+   744→    Inisiatif Baharu\'.
+   745→
+   746→-   **Langkah 2:** Staf mengisi masalah/peluang, tindakan dan hasil,
+   747→    serta memaut bukti.
+   748→
+   749→-   **Langkah 3:** GM menerima notifikasi, menyemak, menetapkan tahap
+   750→    impak dan mengesahkan.
+   751→
+   752→-   **Langkah 4:** Mata inisiatif dikredit dan skor Dimensi 4 dikemas
+   753→    kini.
+   754→
+   755→## 9.3 Aliran GM: Penilaian Bulanan
+   756→
+   757→-   **Langkah 1:** GM membuka \'Laporan\' dan memilih staf serta tempoh.
+   758→
+   759→-   **Langkah 2:** Sistem memaparkan skor 6 dimensi, trend dan
+   760→    drill-down.
+   761→
+   762→-   **Langkah 3:** GM menambah catatan/pelan tindakan dan memberi Rating
+   763→    Akauntabiliti.
+   764→
+   765→-   **Langkah 4:** GM mengeksport laporan PDF untuk sesi maklum balas
+   766→    satu-lawan-satu.
+   767→
+   768→# 10. Senarai Skrin & Cadangan Reka Bentuk UI
+   769→
+   770→  --------------------------------------------------------------------------------
+   771→  **No.**   **Skrin**          **Peranan**   **Kandungan Utama**
+   772→  --------- ------------------ ------------- -------------------------------------
+   773→  1         Log Masuk          Semua         Borang log masuk; butang demo pantas
+   774→
+   775→  2         Papan Pemuka GM    GM            Kad KPI, kedudukan staf, radar, peta
+   776→                                             haba beban kerja, senarai perlu
+   777→                                             perhatian
+   778→
+   779→  3         Papan Pemuka Staf  Staf          Tugasan hari ini, skor sendiri,
+   780→                                             maklum balas terkini
+   781→
+   782→  4         Tugasan            Semua         Papan seret-lepas, penapis, carian
+   783→            (Kanban/Senarai)                 
+   784→
+   785→  5         Butiran Tugasan    Semua         Maklumat, subtugasan, komen, log
+   786→                                             masa, sejarah, penilaian
+   787→
+   788→  6         Prestasi Staf      GM / Staf     Skor 6 dimensi, trend, drill-down
+   789→
+   790→  7         Beban Kerja        GM            Kapasiti vs tugasan aktif setiap staf
+   791→                                             mengikut minggu
+   792→
+   793→  8         Inisiatif          Semua         Hantar, semak, pengesahan, dinding
+   794→                                             inisiatif
+   795→
+   796→  9         Laporan            GM / Staf     Penjana laporan, pratonton, eksport
+   797→
+   798→  10        Notifikasi         Semua         Senarai notifikasi
+   799→
+   800→  11        Tetapan            GM            Pemberat, sasaran, kategori, set
+   801→                                             semula data demo, log audit
+   802→  --------------------------------------------------------------------------------
+   803→
+   804→## 10.1 Garis Panduan Visual
+   805→
+   806→-   **Tema:** Profesional dan tenang; warna utama biru laut (#1F3A5F)
+   807→    dan teal (#0E7C86) selari dengan identiti \'Oasis\'; sokong mod
+   808→    cerah dan gelap.
+   809→
+   810→-   **Kod warna status:** Hijau = Selesai/Seimbang, Kuning = Hampir
+   811→    tarikh akhir/Tinggi, Merah = Lewat/Beban Berlebihan, Biru = Dalam
+   812→    Proses, Kelabu = Belum Mula. Jangan bergantung pada warna
+   813→    semata-mata -- sertakan ikon dan teks.
+   814→
+   815→-   **Navigasi:** Bar sisi (desktop) dan navigasi bawah (mudah alih).
+   816→
+   817→-   **Komponen:** Kad, jadual, carta radar/garis/bar, lencana status,
+   818→    dialog, toast, kerangka pemuatan (skeleton).
+   819→
+   820→# 11. Seni Bina Teknikal
+   821→
+   822→## 11.1 Timbunan Teknologi (Tech Stack)
+   823→
+   824→  ----------------------------------------------------------------------------
+   825→  **Lapisan**           **Pilihan**                  **Sebab**
+   826→  --------------------- ---------------------------- -------------------------
+   827→  **Rangka kerja UI**   React 18 + TypeScript (Vite) Diwajibkan; pantas dan
+   828→                                                     sesuai untuk SPA
+   829→
+   830→  **Penghalaan**        React Router                 Laluan berasaskan peranan
+   831→
+   832→  **Gaya & komponen**   Tailwind CSS + shadcn/ui +   UI konsisten, boleh
+   833→                        lucide-react                 akses, pantas dibina
+   834→
+   835→  **Pengurusan state**  Zustand (dengan middleware   Ringan; mudah mengekalkan
+   836→                        persist)                     data dummy
+   837→
+   838→  **Carta**             Recharts                     Radar, garis, bar, peta
+   839→                                                     haba
+   840→
+   841→  **Seret-dan-lepas**   \@dnd-kit/core               Papan Kanban
+   842→
+   843→  **Borang & validasi** React Hook Form + Zod        Validasi selamat jenis
+   844→
+   845→  **Tarikh**            date-fns (locale ms)         Pengiraan hari bekerja &
+   846→                                                     tarikh BM
+   847→
+   848→  **Eksport**           jsPDF + autotable; PapaParse Laporan PDF/CSV pada
+   849→                        (CSV)                        pihak klien
+   850→
+   851→  **Ujian**             Vitest + React Testing       Menguji enjin skor
+   852→                        Library                      
+   853→
+   854→  **Pangkalan data      Seed JSON/TS + localStorage  Tiada pelayan diperlukan
+   855→  dummy**               (melalui lapisan             
+   856→                        repositori); latensi         
+   857→                        simulasi 200--400 ms         
+   858→  ----------------------------------------------------------------------------
+   859→
+   860→## 11.2 Seni Bina Berlapis
+   861→
+   862→+-----------------------------------------------------------------------+
+   863→| ┌──────────────────────────────────────────────┐                      |
+   864→|                                                                       |
+   865→| │ UI (Pages & Components -- React) │                                  |
+   866→|                                                                       |
+   867→| ├──────────────────────────────────────────────┤                      |
+   868→|                                                                       |
+   869→| │ Hooks / Stores (Zustand) │                                          |
+   870→|                                                                       |
+   871→| ├──────────────────────────────────────────────┤                      |
+   872→|                                                                       |
+   873→| │ Services: scoringEngine, workloadEngine, │                          |
+   874→|                                                                       |
+   875→| │ notificationService, reportService │                                |
+   876→|                                                                       |
+   877→| ├──────────────────────────────────────────────┤                      |
+   878→|                                                                       |
+   879→| │ Repository Interface (TaskRepo, UserRepo...) │                      |
+   880→|                                                                       |
+   881→| ├───────────────────────┬──────────────────────┤                      |
+   882→|                                                                       |
+   883→| │ MockRepository (v1.0) │ ApiRepository (v2.0) │                      |
+   884→|                                                                       |
+   885→| │ seed.ts + localStorage│ REST/Supabase/Firebase│                     |
+   886→|                                                                       |
+   887→| └───────────────────────┴──────────────────────┘                      |
+   888→+=======================================================================+
+   889→+-----------------------------------------------------------------------+
+   890→
+   891→## 11.3 Struktur Folder Cadangan
+   892→
+   893→+-----------------------------------------------------------------------+
+   894→| src/                                                                  |
+   895→|                                                                       |
+   896→| ├─ app/ (router, providers, layout)                                   |
+   897→|                                                                       |
+   898→| ├─ components/ui/ (shadcn/ui)                                         |
+   899→|                                                                       |
+   900→| ├─ features/                                                          |
+   901→|                                                                       |
+   902→| │ ├─ auth/ dashboard/ tasks/ workload/                                |
+   903→|                                                                       |
+   904→| │ ├─ quality/ initiatives/ communication/                             |
+   905→|                                                                       |
+   906→| │ ├─ performance/ reports/ notifications/ settings/                   |
+   907→|                                                                       |
+   908→| ├─ services/ (scoringEngine.ts, workloadEngine.ts, exportService.ts)  |
+   909→|                                                                       |
+   910→| ├─ data/                                                              |
+   911→|                                                                       |
+   912→| │ ├─ seed.ts (data contoh)                                            |
+   913→|                                                                       |
+   914→| │ ├─ db.ts (inisialisasi & set semula)                                |
+   915→|                                                                       |
+   916→| │ └─ repositories/(interface + mock implementation)                   |
+   917→|                                                                       |
+   918→| ├─ types/ (model TypeScript)                                          |
+   919→|                                                                       |
+   920→| ├─ lib/ (utils, constants, i18n)                                      |
+   921→|                                                                       |
+   922→| └─ tests/                                                             |
+   923→+=======================================================================+
+   924→+-----------------------------------------------------------------------+
+   925→
+   926→## 11.4 Strategi Pangkalan Data Dummy
+   927→
+   928→-   Data awal disimpan dalam seed.ts dan dimuatkan ke localStorage pada
+   929→    lawatan pertama.
+   930→
+   931→-   Semua akses data melalui fungsi async dalam repositori (cth.
+   932→    getTasks(), createTask()) dengan latensi simulasi supaya UI sedia
+   933→    untuk API sebenar.
+   934→
+   935→-   Butang \'Set Semula Data Demo\' memadam kunci localStorage dan
+   936→    memuat semula seed.
+   937→
+   938→-   Tarikh dalam data seed dijana secara relatif kepada tarikh semasa
+   939→    supaya papan pemuka sentiasa kelihatan \'hidup\'.
+   940→
+   941→-   Laluan naik taraf (fasa 2): tukar MockRepository kepada
+   942→    ApiRepository (cadangan: Supabase/PostgreSQL atau Firebase) dengan
+   943→    pengesahan sebenar.
+   944→
+   945→# 12. Model Data
+   946→
+   947→Jadual berikut menggambarkan entiti utama (PK = kunci utama, FK = kunci
+   948→asing).
+   949→
+   950→### users
+   951→
+   952→  -----------------------------------------------------------------------
+   953→  **Medan**          **Jenis**      **Catatan**
+   954→  ------------------ -------------- -------------------------------------
+   955→  id (PK)            string         Pengecam unik
+   956→
+   957→  name               string         Nama penuh
+   958→
+   959→  email              string         Unik
+   960→
+   961→  role               enum           GM \| STAF
+   962→
+   963→  position           string         Jawatan
+   964→
+   965→  weeklyHours        number         Lalai 40
+   966→
+   967→  avatarColor        string         Warna avatar
+   968→
+   969→  startDate          date           
+   970→
+   971→  active             boolean        
+   972→  -----------------------------------------------------------------------
+   973→
+   974→### tasks
+   975→
+   976→  -----------------------------------------------------------------------
+   977→  **Medan**          **Jenis**      **Catatan**
+   978→  ------------------ -------------- -------------------------------------
+   979→  id (PK)            string         
+   980→
+   981→  title /            string         Tajuk & penerangan
+   982→  description                       
+   983→
+   984→  assigneeId (FK)    string         → users.id
+   985→
+   986→  createdBy (FK)     string         → users.id (GM)
+   987→
+   988→  category           enum           Latihan \| Perundingan \| Pemasaran
+   989→                                    \| Pentadbiran \| Kewangan \| Lain
+   990→
+   991→  priority           enum           Rendah \| Sederhana \| Tinggi \|
+   992→                                    Segera
+   993→
+   994→  status             enum           Belum Mula \| Dalam Proses \|
+   995→                                    Menunggu Semakan \| Selesai \|
+   996→                                    Disekat \| Dibatalkan
+   997→
+   998→  progress           number         0--100
+   999→
+  1000→  complexity         number         1--3
+  1001→
+  1002→  estimatedHours     number         
+  1003→
+  1004→  startDate /        date           
+  1005→  dueDate                           
+  1006→
+  1007→  completedAt        datetime       Null jika belum siap
+  1008→
+  1009→  extendedDueDate    date           Jika lanjutan diluluskan
+  1010→
+  1011→  reworkCount        number         Bilangan pemulangan
+  1012→
+  1013→  links              string\[\]     Pautan lampiran
+  1014→  -----------------------------------------------------------------------
+  1015→
+  1016→### time_logs
+  1017→
+  1018→  -----------------------------------------------------------------------
+  1019→  **Medan**          **Jenis**      **Catatan**
+  1020→  ------------------ -------------- -------------------------------------
+  1021→  id (PK)            string         
+  1022→
+  1023→  taskId (FK)        string         
+  1024→
+  1025→  userId (FK)        string         
+  1026→
+  1027→  date               date           
+  1028→
+  1029→  hours              number         
+  1030→
+  1031→  note               string         
+  1032→  -----------------------------------------------------------------------
+  1033→
+  1034→### quality_reviews
+  1035→
+  1036→  -----------------------------------------------------------------------
+  1037→  **Medan**          **Jenis**      **Catatan**
+  1038→  ------------------ -------------- -------------------------------------
+  1039→  id (PK)            string         
+  1040→
+  1041→  taskId (FK)        string         
+  1042→
+  1043→  reviewerId (FK)    string         GM
+  1044→
+  1045→  accuracy /         number         Setiap satu 1--5
+  1046→  completeness /                    
+  1047→  professionalism /                 
+  1048→  specCompliance                    
+  1049→
+  1050→  comment            string         
+  1051→
+  1052→  createdAt          datetime       
+  1053→  -----------------------------------------------------------------------
+  1054→
+  1055→### initiatives
+  1056→
+  1057→  -----------------------------------------------------------------------
+  1058→  **Medan**          **Jenis**      **Catatan**
+  1059→  ------------------ -------------- -------------------------------------
+  1060→  id (PK)            string         
+  1061→
+  1062→  userId (FK)        string         
+  1063→
+  1064→  title / problem /  string         
+  1065→  action / outcome                  
+  1066→
+  1067→  evidenceLinks      string\[\]     
+  1068→
+  1069→  impactLevel        enum           Kecil \| Sederhana \| Besar
+  1070→
+  1071→  points             number         5 \| 10 \| 20
+  1072→
+  1073→  status             enum           Dihantar \| Disahkan \| Ditolak
+  1074→
+  1075→  submittedAt /      datetime       
+  1076→  verifiedAt                        
+  1077→
+  1078→  gmComment          string         
+  1079→  -----------------------------------------------------------------------
+  1080→
+  1081→### comments
+  1082→
+  1083→  -----------------------------------------------------------------------
+  1084→  **Medan**          **Jenis**      **Catatan**
+  1085→  ------------------ -------------- -------------------------------------
+  1086→  id (PK)            string         
+  1087→
+  1088→  taskId (FK)        string         
+  1089→
+  1090→  authorId (FK)      string         
+  1091→
+  1092→  body               string         
+  1093→
+  1094→  replyToId          string         Untuk benang
+  1095→
+  1096→  createdAt          datetime       Digunakan untuk kira SLA respons
+  1097→  -----------------------------------------------------------------------
+  1098→
+  1099→### blockers
+  1100→
+  1101→  -----------------------------------------------------------------------
+  1102→  **Medan**          **Jenis**      **Catatan**
+  1103→  ------------------ -------------- -------------------------------------
+  1104→  id (PK)            string         
+  1105→
+  1106→  taskId (FK)        string         
+  1107→
+  1108→  reportedBy (FK)    string         
+  1109→
+  1110→  type               enum           Maklumat \| Sumber \| Klien \|
+  1111→                                    Teknikal \| Lain
+  1112→
+  1113→  description /      string         
+  1114→  helpNeeded                        
+  1115→
+  1116→  reportedAt /       datetime       
+  1117→  resolvedAt                        
+  1118→  -----------------------------------------------------------------------
+  1119→
+  1120→### accountability_ratings
+  1121→
+  1122→  -----------------------------------------------------------------------
+  1123→  **Medan**          **Jenis**      **Catatan**
+  1124→  ------------------ -------------- -------------------------------------
+  1125→  id (PK)            string         
+  1126→
+  1127→  userId (FK)        string         
+  1128→
+  1129→  period             string         cth. 2026-10
+  1130→
+  1131→  rating             number         1--5
+  1132→
+  1133→  comment            string         
+  1134→  -----------------------------------------------------------------------
+  1135→
+  1136→### extension_requests
+  1137→
+  1138→  -----------------------------------------------------------------------
+  1139→  **Medan**          **Jenis**      **Catatan**
+  1140→  ------------------ -------------- -------------------------------------
+  1141→  id (PK)            string         
+  1142→
+  1143→  taskId (FK)        string         
+  1144→
+  1145→  requestedDate      date           
+  1146→
+  1147→  reason             string         
+  1148→
+  1149→  status             enum           Menunggu \| Diluluskan \| Ditolak
+  1150→  -----------------------------------------------------------------------
+  1151→
+  1152→### notifications / audit_logs / settings
+  1153→
+  1154→  -----------------------------------------------------------------------
+  1155→  **Medan**          **Jenis**      **Catatan**
+  1156→  ------------------ -------------- -------------------------------------
+  1157→  notifications      ---            id, userId, type, message, link,
+  1158→                                    read, createdAt
+  1159→
+  1160→  audit_logs         ---            id, actorId, action, entity,
+  1161→                                    entityId, timestamp, detail
+  1162→
+  1163→  settings           ---            dimensionWeights, initiativeTarget,
+  1164→                                    gradeBands, workingDays, holidays,
+  1165→                                    utilisationBands
+  1166→  -----------------------------------------------------------------------
+  1167→
+  1168→# 13. Data Dummy (Seed)
+  1169→
+  1170→Pangkalan data dummy mengandungi 1 GM, 6 staf dan sekitar 60--80 tugasan
+  1171→dalam tempoh 3 bulan dengan profil prestasi yang berbeza supaya semua
+  1172→paparan dapat didemonstrasikan. Nama di bawah ialah nama fiksyen.
+  1173→
+  1174→  ------------------------------------------------------------------------
+  1175→  **Nama (Dummy)**       **Jawatan**            **Profil Prestasi Demo**
+  1176→  ---------------------- ---------------------- --------------------------
+  1177→  **Puan Rohana          General Manager        Pengguna GM
+  1178→  Abdullah**                                    
+  1179→
+  1180→  **Aisyah Rahman**      Eksekutif Program      Cemerlang secara
+  1181→                         Latihan                keseluruhan; beban kerja
+  1182→                                                tinggi
+  1183→
+  1184→  **Muhammad Hafiz       Perunding Junior       Kualiti tinggi tetapi
+  1185→  Ismail**                                      kerap lewat sedikit
+  1186→
+  1187→  **Nurul Huda Hassan**  Pegawai Pemasaran      Banyak inisiatif;
+  1188→                                                komunikasi baik
+  1189→
+  1190→  **Faizal Karim**       Pereka Modul Latihan   Kualiti sangat baik; kemas
+  1191→                                                kini jarang
+  1192→
+  1193→  **Siti Zulaikha Omar** Pegawai Pentadbiran &  Konsisten, tepat masa;
+  1194→                         Kewangan               beban kerja rendah
+  1195→
+  1196→  **Tan Wei Ming**       Penyelaras Klien       Prestasi sederhana;
+  1197→                                                beberapa tugasan
+  1198→                                                tertunggak & halangan
+  1199→  ------------------------------------------------------------------------
+  1200→
+  1201→## 13.1 Contoh Tugasan Seed
+  1202→
+  1203→-   Menyediakan modul latihan \'Kepimpinan Berkesan\' (Latihan)
+  1204→
+  1205→-   Menyelaras logistik program 2 hari di Shah Alam (Latihan)
+  1206→
+  1207→-   Menghantar cadangan perundingan kepada klien korporat (Perundingan)
+  1208→
+  1209→-   Menguruskan kempen media sosial bulan ini (Pemasaran)
+  1210→
+  1211→-   Menyediakan invois & rekonsiliasi bulanan (Kewangan)
+  1212→
+  1213→-   Mengemas kini pangkalan data klien (Pentadbiran)
+  1214→
+  1215→-   Menyediakan laporan maklum balas peserta kursus (Latihan)
+  1216→
+  1217→# 14. Pelan Pelaksanaan & Fasa
+  1218→
+  1219→  -------------------------------------------------------------------------
+  1220→  **Fasa**           **Skop**                  **Tempoh     **Hasil**
+  1221→                                               Cadangan**   
+  1222→  ------------------ ------------------------- ------------ ---------------
+  1223→  Fasa 0 --          Sahkan PRD, pemberat      2--3 hari    PRD diluluskan
+  1224→  Persediaan         skor, data contoh                      
+  1225→
+  1226→  Fasa 1 -- Asas     Projek React, reka letak, 3--4 hari    Rangka aplikasi
+  1227→                     penghalaan, dummy DB, log              berjalan
+  1228→                     masuk berperanan                       
+  1229→
+  1230→  Fasa 2 -- Tugasan  CRUD tugasan, Kanban,     5--7 hari    Modul tugasan
+  1231→                     komen, halangan, log masa              lengkap
+  1232→
+  1233→  Fasa 3 --          Enjin skor, penilaian     5--7 hari    Skor 6 dimensi
+  1234→  Penilaian          kualiti, inisiatif,                    berfungsi
+  1235→                     akauntabiliti                          
+  1236→
+  1237→  Fasa 4 -- Papan    Papan pemuka GM/Staf,     4--5 hari    Demo penuh
+  1238→  Pemuka & Laporan   beban kerja, laporan                   
+  1239→                     PDF/CSV                                
+  1240→
+  1241→  Fasa 5 --          Responsif,                3--5 hari    Versi 1.0
+  1242→  Penggilapan & UAT  kebolehaksesan, ujian,                 prototaip
+  1243→                     maklum balas GM                        
+  1244→
+  1245→  Fasa 6 -- Produksi Backend sebenar,          Dirancang    Versi 2.0
+  1246→  (pilihan)          pengesahan, notifikasi    kemudian     
+  1247→                     e-mel/WhatsApp, hosting                
+  1248→  -------------------------------------------------------------------------
+  1249→
+  1250→*Tempoh di atas ialah anggaran jika dibina secara iteratif dengan
+  1251→bantuan AI (z.ai GLM 5.2) dan disemak oleh manusia; ia boleh lebih
+  1252→pendek untuk prototaip dan lebih panjang jika terdapat banyak pindaan.*
+  1253→
+  1254→# 15. Panduan Membina di z.ai (GLM 5.2)
+  1255→
+  1256→Bahagian ini memudahkan pembinaan menggunakan z.ai. Strategi terbaik
+  1257→ialah membina secara berperingkat (satu modul setiap gesaan/prompt) dan
+  1258→menguji selepas setiap peringkat, bukannya meminta keseluruhan sistem
+  1259→sekali gus.
+  1260→
+  1261→## 15.1 Amalan Terbaik
+  1262→
+  1263→-   Lampirkan atau tampal PRD ini (atau bahagian berkaitan) sebagai
+  1264→    konteks pada permulaan.
+  1265→
+  1266→-   Bina satu fasa pada satu masa (rujuk Bahagian 14) dan sahkan
+  1267→    hasilnya sebelum meneruskan.
+  1268→
+  1269→-   Gesaan dalam Bahasa Inggeris biasanya memberi kod yang lebih tepat;
+  1270→    nyatakan secara jelas bahawa teks antara muka mesti dalam Bahasa
+  1271→    Malaysia.
+  1272→
+  1273→-   Minta GLM menulis ujian unit untuk enjin skor dan formula dalam
+  1274→    Bahagian 6.
+  1275→
+  1276→-   Jika hasil tersasar, nyatakan masalah khusus dan minta pembetulan
+  1277→    pada fail/komponen tertentu sahaja.
+  1278→
+  1279→-   Simpan versi kod yang berfungsi sebelum memulakan perubahan besar.
+  1280→
+  1281→-   Ciri dan antara muka z.ai boleh berubah; rujuk dokumentasi rasmi
+  1282→    platform untuk arahan terkini mengenai penggunaan model dan
+  1283→    pengeksportan projek.
+  1284→
+  1285→## 15.2 Gesaan Induk (Master Prompt) -- Fasa 1
+  1286→
+  1287→+-----------------------------------------------------------------------+
+  1288→| You are an expert senior React engineer. Build a web app called       |
+  1289→| EDUOASIS TASK360,                                                     |
+  1290→|                                                                       |
+  1291→| a Staff Performance & Task Monitoring System for a training &         |
+  1292→| consultancy company                                                   |
+  1293→|                                                                       |
+  1294→| (1 General Manager + 6 staff). All UI text must be in Bahasa          |
+  1295→| Malaysia.                                                             |
+  1296→|                                                                       |
+  1297→| TECH: React 18 + TypeScript + Vite, Tailwind CSS, shadcn/ui,          |
+  1298→| lucide-react, React Router,                                           |
+  1299→|                                                                       |
+  1300→| Zustand (persist), Recharts, \@dnd-kit, React Hook Form + Zod,        |
+  1301→| date-fns.                                                             |
+  1302→|                                                                       |
+  1303→| DATA: No backend. Create a repository layer (interfaces +             |
+  1304→| MockRepository) backed by                                             |
+  1305→|                                                                       |
+  1306→| seed.ts + localStorage with 200-400ms simulated latency, so it can    |
+  1307→| later be swapped for                                                  |
+  1308→|                                                                       |
+  1309→| a real API. Seed 1 GM + 6 staff and \~70 tasks over the last 3 months |
+  1310→| (dates relative to today).                                            |
+  1311→|                                                                       |
+  1312→| Add a \'Reset Demo Data\' button in Settings.                         |
+  1313→|                                                                       |
+  1314→| ROLES: GM (full access) and STAF (own data). Quick demo login buttons |
+  1315→| for both roles.                                                       |
+  1316→|                                                                       |
+  1317→| FIRST DELIVERABLE: project scaffold, layout (sidebar + topbar,        |
+  1318→| responsive), routing with                                             |
+  1319→|                                                                       |
+  1320→| role guards, types for all entities, seed data, repositories and      |
+  1321→| login page.                                                           |
+  1322→|                                                                       |
+  1323→| Follow the folder structure and data model in the PRD. Do not build   |
+  1324→| other modules yet.                                                    |
+  1325→+=======================================================================+
+  1326→+-----------------------------------------------------------------------+
+  1327→
+  1328→## 15.3 Gesaan Peringkat Seterusnya
+  1329→
+  1330→  ------------------------------------------------------------------------
+  1331→  **Fasa**        **Ringkasan Gesaan**
+  1332→  --------------- --------------------------------------------------------
+  1333→  **2 --          Build the Tasks module per PRD section 7.3: Kanban
+  1334→  Tugasan**       (drag-and-drop), list view with filters, task detail
+  1335→                  page with comments, blockers, time logs, history, GM
+  1336→                  approve/return flow with rework count, extension
+  1337→                  requests.
+  1338→
+  1339→  **3 --          Build services/scoringEngine.ts implementing the exact
+  1340→  Penilaian**     formulas in PRD section 6 for the six dimensions,
+  1341→                  weighted overall score and grade bands, with Vitest unit
+  1342→                  tests. Then build quality review form, initiative
+  1343→                  submit/verify flow and monthly accountability rating.
+  1344→
+  1345→  **4 -- Papan    Build GM dashboard (KPI cards, staff leaderboard, radar
+  1346→  Pemuka**        chart, workload heatmap, \'needs attention\' list) and
+  1347→                  Staff dashboard, plus Performance page with drill-down
+  1348→                  from each score to its source records.
+  1349→
+  1350→  **5 --          Build Reports page: individual and team reports with
+  1351→  Laporan**       period filter, PDF and CSV export, and GM action-plan
+  1352→                  notes.
+  1353→
+  1354→  **6 --          Add notifications, settings (weights, targets,
+  1355→  Penggilapan**   holidays), audit log, accessibility (WCAG AA), dark
+  1356→                  mode, empty/loading/error states, and mobile
+  1357→                  responsiveness.
+  1358→  ------------------------------------------------------------------------
+  1359→
+  1360→# 16. Strategi Pengujian & Kriteria Penerimaan (UAT)
+  1361→
+  1362→## 16.1 Pengujian
+  1363→
+  1364→-   Ujian unit: enjin skor, utilisasi/beban kerja, pengiraan hari
+  1365→    bekerja.
+  1366→
+  1367→-   Ujian komponen: borang tugasan, borang penilaian, Kanban.
+  1368→
+  1369→-   Ujian hujung-ke-hujung manual: tiga aliran dalam Bahagian 9.
+  1370→
+  1371→-   Ujian peranan: staf tidak boleh mengakses data staf lain atau
+  1372→    halaman GM.
+  1373→
+  1374→## 16.2 Kriteria Penerimaan
+  1375→
+  1376→  ---------------------------------------------------------------------------------
+  1377→  **No.**   **Kriteria**                                               **Lulus?**
+  1378→  --------- ---------------------------------------------------------- ------------
+  1379→  1         GM boleh mencipta tugasan, menugaskan kepada staf, dan     ☐
+  1380→            staf menerimanya serta-merta.                              
+  1381→
+  1382→  2         Perubahan status tugasan mengemas kini skor Task           ☐
+  1383→            Completion & Timeliness serta-merta.                       
+  1384→
+  1385→  3         Penilaian kualiti 1--5 dan pemulangan semakan semula       ☐
+  1386→            mengubah skor Work Quality mengikut formula.               
+  1387→
+  1388→  4         Inisiatif yang disahkan menambah mata dan mengemas kini    ☐
+  1389→            skor Initiative.                                           
+  1390→
+  1391→  5         Komen, SLA respons dan halangan mengemas kini skor         ☐
+  1392→            Communication & Accountability.                            
+  1393→
+  1394→  6         Log jam dan kapasiti menghasilkan status beban kerja yang  ☐
+  1395→            betul (Rendah/Seimbang/Tinggi/Berlebihan).                 
+  1396→
+  1397→  7         Skor boleh diklik (drill-down) dan menunjukkan rekod       ☐
+  1398→            sumber.                                                    
+  1399→
+  1400→  8         Laporan individu dan pasukan boleh dieksport ke PDF dan    ☐
+  1401→            CSV.                                                       
+  1402→
+  1403→  9         Staf hanya melihat skor dan data sendiri.                  ☐
+  1404→
+  1405→  10        Butang Set Semula Data Demo memulihkan data asal.          ☐
+  1406→
+  1407→  11        Aplikasi boleh digunakan pada telefon pintar dan desktop.  ☐
+  1408→
+  1409→  12        Semua teks antara muka dalam Bahasa Malaysia.              ☐
+  1410→  ---------------------------------------------------------------------------------
+  1411→
+  1412→# 17. Risiko & Mitigasi
+  1413→
+  1414→  --------------------------------------------------------------------------
+  1415→  **Risiko**           **Kesan**           **Mitigasi**
+  1416→  -------------------- ------------------- ---------------------------------
+  1417→  **Staf berasa        Moral rendah,       Perkenalkan sistem secara telus;
+  1418→  dipantau secara      penolakan sistem    staf boleh lihat formula dan skor
+  1419→  berlebihan**                             sendiri; fokus pada pembangunan
+  1420→
+  1421→  **Skor dianggap      Pertikaian          Pemberat kerumitan, tugasan
+  1422→  tidak adil**         penilaian           dilanjutkan tidak dikira lewat,
+  1423→                                           drill-down, keputusan akhir oleh
+  1424→                                           GM
+  1425→
+  1426→  **Data tidak dikemas Skor tidak tepat    Kemas kini mudah (\<30 saat),
+  1427→  kini**                                   peringatan automatik, dimensi
+  1428→                                           komunikasi mengukur kekerapan
+  1429→                                           kemas kini
+  1430→
+  1431→  **GM tidak sempat    Dimensi             Peringatan penilaian tertunda;
+  1432→  menilai**            kualiti/inisiatif   borang pantas; sesi semakan
+  1433→                       tidak lengkap       mingguan 15 minit
+  1434→
+  1435→  **Data dummy hilang  Kehilangan data     Butang set semula; fasa 2 beralih
+  1436→  (localStorage        demo                ke DB sebenar
+  1437→  dikosongkan)**                           
+  1438→
+  1439→  **Kod AI mengandungi Kelewatan pembinaan Bina berperingkat, ujian unit
+  1440→  ralat atau tidak                         enjin skor, semakan kod
+  1441→  konsisten**                              
+  1442→
+  1443→  **Pematuhan privasi  Risiko              Semak PDPA 2010, kawalan akses,
+  1444→  pada fasa produksi** undang-undang       kebenaran, polisi penyimpanan
+  1445→                                           data
+  1446→  --------------------------------------------------------------------------
+  1447→
+  1448→# 18. Soalan Terbuka untuk Keputusan GM
+  1449→
+  1450→-   Adakah pemberat lalai (20/15/25/10/15/15) sesuai, atau perlu
+  1451→    disesuaikan mengikut keutamaan syarikat?
+  1452→
+  1453→-   Adakah semua staf mempunyai tugasan yang setara, atau perlu skor
+  1454→    berbeza mengikut jawatan (cth. Pemasaran vs Perunding)?
+  1455→
+  1456→-   Adakah staf dibenarkan melihat skor mereka sendiri secara langsung,
+  1457→    atau selepas GM menyemak?
+  1458→
+  1459→-   Berapa kerap penilaian rasmi akan dibuat (bulanan atau suku
+  1460→    tahunan)?
+  1461→
+  1462→-   Adakah perlu notifikasi WhatsApp/e-mel pada fasa produksi?
+  1463→
+  1464→-   Adakah data sistem akan digunakan sebagai input rasmi untuk
+  1465→    bonus/kenaikan gaji? (mempengaruhi keperluan audit dan pengesahan)
+  1466→
+  1467→# 19. Glosari
+  1468→
+  1469→  -----------------------------------------------------------------------
+  1470→  **Istilah**        **Maksud**
+  1471→  ------------------ ----------------------------------------------------
+  1472→  **PRD**            Product Requirement Document -- Dokumen Keperluan
+  1473→                     Produk
+  1474→
+  1475→  **KPI**            Key Performance Indicator -- Petunjuk Prestasi Utama
+  1476→
+  1477→  **OTR**            On-Time Rate -- Kadar Tepat Masa
+  1478→
+  1479→  **Blocker /        Perkara yang menghalang tugasan daripada diteruskan
+  1480→  Halangan**         
+  1481→
+  1482→  **Rework**         Kerja yang dikembalikan untuk pembetulan
+  1483→
+  1484→  **Throughput**     Daya pemprosesan -- jumlah kerja yang disiapkan
+  1485→                     dalam tempoh tertentu
+  1486→
+  1487→  **Utilisasi**      Peratus jam tersedia yang digunakan untuk kerja
+  1488→
+  1489→  **Kanban**         Papan visual tugasan mengikut lajur status
+  1490→
+  1491→  **SLA**            Service Level Agreement -- tempoh respons yang
+  1492→                     dijanjikan
+  1493→
+  1494→  **MoSCoW**         Kaedah keutamaan: Must, Should, Could, Won\'t
+  1495→
+  1496→  **UAT**            User Acceptance Testing -- Ujian Penerimaan Pengguna
+  1497→
+  1498→  **PDPA**           Akta Perlindungan Data Peribadi 2010 (Malaysia)
+  1499→  -----------------------------------------------------------------------
+  1500→
+  1501→## Sejarah Semakan Dokumen
+  1502→
+  1503→  ----------------------------------------------------------------------------
+  1504→  **Versi**   **Tarikh**     **Penerangan**                     **Penulis**
+  1505→  ----------- -------------- ---------------------------------- --------------
+  1506→  1.0         16 Nov 2026    Draf awal PRD untuk kelulusan      Pasukan
+  1507→                                                                Pembangunan
+  1508→
+  1509→  ----------------------------------------------------------------------------
+  1510→

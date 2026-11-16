@@ -1,0 +1,931 @@
+     1→"use client";
+     2→
+     3→import { useState } from "react";
+     4→import { useQuery, useQueryClient } from "@tanstack/react-query";
+     5→import { motion, AnimatePresence } from "framer-motion";
+     6→import { toast } from "sonner";
+     7→
+     8→import { apiGet, apiPost, apiPatch } from "@/lib/api";
+     9→import { useAppStore } from "@/lib/store";
+    10→import { cn } from "@/lib/utils";
+    11→import { initials, relativeTime, formatDate } from "@/lib/meta";
+    12→
+    13→import {
+    14→  SectionHeader,
+    15→  LoadingCard,
+    16→  EmptyState,
+    17→  PageContainer,
+    18→} from "@/components/common/ui";
+    19→import { Card } from "@/components/ui/card";
+    20→import { Button } from "@/components/ui/button";
+    21→import { Input } from "@/components/ui/input";
+    22→import { Textarea } from "@/components/ui/textarea";
+    23→import { Label } from "@/components/ui/label";
+    24→import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+    25→import { Badge } from "@/components/ui/badge";
+    26→import {
+    27→  Dialog,
+    28→  DialogContent,
+    29→  DialogHeader,
+    30→  DialogTitle,
+    31→  DialogFooter,
+    32→} from "@/components/ui/dialog";
+    33→import {
+    34→  Select,
+    35→  SelectContent,
+    36→  SelectItem,
+    37→  SelectTrigger,
+    38→  SelectValue,
+    39→} from "@/components/ui/select";
+    40→
+    41→import {
+    42→  Lightbulb,
+    43→  Plus,
+    44→  Award,
+    45→  Clock,
+    46→  CheckCircle2,
+    47→  XCircle,
+    48→  ExternalLink,
+    49→  ChevronDown,
+    50→  ChevronRight,
+    51→  Sparkles,
+    52→  Trophy,
+    53→  Paperclip,
+    54→  Trash2,
+    55→  Loader2,
+    56→  Send,
+    57→  FileText,
+    58→  Target,
+    59→  Rocket,
+    60→} from "lucide-react";
+    61→
+    62→import type { Initiative } from "@/types";
+    63→
+    64→// ---- Types ----------------------------------------------------------------
+    65→
+    66→interface InitiativeUser {
+    67→  id: string;
+    68→  name: string;
+    69→  position: string;
+    70→  avatarColor: string;
+    71→}
+    72→
+    73→interface InitiativeWithUser extends Initiative {
+    74→  user?: InitiativeUser;
+    75→}
+    76→
+    77→type StatusFilter = "all" | "Dihantar" | "Disahkan" | "Ditolak";
+    78→type ImpactLevel = "Kecil" | "Sederhana" | "Besar";
+    79→
+    80→// ---- Meta -----------------------------------------------------------------
+    81→
+    82→const POINTS: Record<ImpactLevel, number> = { Kecil: 5, Sederhana: 10, Besar: 20 };
+    83→
+    84→const IMPACT_META: Record<ImpactLevel, { label: string; text: string; bg: string; dot: string }> = {
+    85→  Kecil: { label: "Kecil", text: "text-muted-foreground", bg: "bg-muted", dot: "bg-status-neutral" },
+    86→  Sederhana: { label: "Sederhana", text: "text-status-warning", bg: "bg-status-warning/15", dot: "bg-status-warning" },
+    87→  Besar: { label: "Besar", text: "text-status-success", bg: "bg-status-success/10", dot: "bg-status-success" },
+    88→};
+    89→
+    90→const INITIATIVE_STATUS_META: Record<string, { label: string; text: string; bg: string; dot: string }> = {
+    91→  Dihantar: { label: "Dihantar", text: "text-status-warning", bg: "bg-status-warning/15", dot: "bg-status-warning" },
+    92→  Disahkan: { label: "Disahkan", text: "text-status-success", bg: "bg-status-success/10", dot: "bg-status-success" },
+    93→  Ditolak: { label: "Ditolak", text: "text-status-danger", bg: "bg-status-danger/10", dot: "bg-status-danger" },
+    94→};
+    95→
+    96→const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
+    97→  { key: "all", label: "Semua" },
+    98→  { key: "Dihantar", label: "Dihantar" },
+    99→  { key: "Disahkan", label: "Disahkan" },
+   100→  { key: "Ditolak", label: "Ditolak" },
+   101→];
+   102→
+   103→// ---- Main View ------------------------------------------------------------
+   104→
+   105→export function InitiativesView() {
+   106→  const user = useAppStore((s) => s.user)!;
+   107→  const qc = useQueryClient();
+   108→  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+   109→  const [createOpen, setCreateOpen] = useState(false);
+   110→
+   111→  const invalidateAll = () => {
+   112→    qc.invalidateQueries({ queryKey: ["initiatives"] });
+   113→  };
+   114→
+   115→  return (
+   116→    <PageContainer>
+   117→      {/* Header */}
+   118→      <div className="flex items-end justify-between gap-3 flex-wrap">
+   119→        <div>
+   120→          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+   121→            Sumbangan Tambahan
+   122→          </span>
+   123→          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight mt-0.5">
+   124→            Inisiatif &amp; Penyelesaian Masalah
+   125→          </h1>
+   126→          <p className="text-sm text-muted-foreground mt-0.5">
+   127→            Sumbangan di luar tugasan rasmi
+   128→          </p>
+   129→        </div>
+   130→        <Button size="sm" onClick={() => setCreateOpen(true)}>
+   131→          <Plus className="w-4 h-4 mr-1" /> Hantar Inisiatif
+   132→        </Button>
+   133→      </div>
+   134→
+   135→      {/* Status filter tabs */}
+   136→      <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-muted/60 border border-border overflow-x-auto max-w-full">
+   137→        {STATUS_FILTERS.map((f) => (
+   138→          <button
+   139→            key={f.key}
+   140→            onClick={() => setStatusFilter(f.key)}
+   141→            className={cn(
+   142→              "px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap",
+   143→              statusFilter === f.key
+   144→                ? "bg-background shadow-sm text-foreground"
+   145→                : "text-muted-foreground hover:text-foreground"
+   146→            )}
+   147→          >
+   148→            {f.label}
+   149→          </button>
+   150→        ))}
+   151→      </div>
+   152→
+   153→      {/* KPI summary */}
+   154→      <InitiativeKPIs />
+   155→
+   156→      {/* Initiative list */}
+   157→      <InitiativeList
+   158→        statusFilter={statusFilter}
+   159→        currentUserId={user.id}
+   160→        isGM={user.role === "GM"}
+   161→        onMutated={invalidateAll}
+   162→      />
+   163→
+   164→      {/* Wall */}
+   165→      <InitiativeWall />
+   166→
+   167→      {/* Create dialog */}
+   168→      <CreateInitiativeDialog
+   169→        open={createOpen}
+   170→        onOpenChange={setCreateOpen}
+   171→        onCreated={invalidateAll}
+   172→      />
+   173→    </PageContainer>
+   174→  );
+   175→}
+   176→
+   177→// ---- KPI cards ------------------------------------------------------------
+   178→
+   179→function InitiativeKPIs() {
+   180→  const { data, isLoading } = useQuery({
+   181→    queryKey: ["initiatives", "all"],
+   182→    queryFn: () =>
+   183→      apiGet<{ initiatives: InitiativeWithUser[] }>("/api/initiatives?status=all"),
+   184→  });
+   185→
+   186→  const all = data?.initiatives || [];
+   187→  const total = all.length;
+   188→  const confirmedPoints = all
+   189→    .filter((i) => i.status === "Disahkan")
+   190→    .reduce((sum, i) => sum + (i.points || 0), 0);
+   191→  const pending = all.filter((i) => i.status === "Dihantar").length;
+   192→
+   193→  if (isLoading) {
+   194→    return (
+   195→      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   196→        <LoadingCard />
+   197→        <LoadingCard />
+   198→        <LoadingCard />
+   199→      </div>
+   200→    );
+   201→  }
+   202→
+   203→  const cards = [
+   204→    {
+   205→      label: "Jumlah Inisiatif",
+   206→      value: total,
+   207→      icon: Lightbulb,
+   208→      accent: "text-accent",
+   209→      bg: "bg-accent/10",
+   210→      hint: "Semua rekod",
+   211→    },
+   212→    {
+   213→      label: "Mata Disahkan",
+   214→      value: confirmedPoints,
+   215→      icon: Award,
+   216→      accent: "text-status-success",
+   217→      bg: "bg-status-success/10",
+   218→      hint: "Jumlah mata diperoleh",
+   219→    },
+   220→    {
+   221→      label: "Menunggu Pengesahan",
+   222→      value: pending,
+   223→      icon: Clock,
+   224→      accent: "text-status-warning",
+   225→      bg: "bg-status-warning/15",
+   226→      hint: "Status Dihantar",
+   227→    },
+   228→  ];
+   229→
+   230→  return (
+   231→    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+   232→      {cards.map((c) => (
+   233→        <Card key={c.label} className="p-4 lg:p-5">
+   234→          <div className="flex items-start justify-between gap-3">
+   235→            <div className="min-w-0">
+   236→              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+   237→                {c.label}
+   238→              </div>
+   239→              <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">
+   240→                {c.value}
+   241→              </div>
+   242→              <div className="text-xs text-muted-foreground mt-1">{c.hint}</div>
+   243→            </div>
+   244→            <div className={cn("w-9 h-9 rounded-md flex items-center justify-center shrink-0", c.bg)}>
+   245→              <c.icon className={cn("w-5 h-5", c.accent)} />
+   246→            </div>
+   247→          </div>
+   248→        </Card>
+   249→      ))}
+   250→    </div>
+   251→  );
+   252→}
+   253→
+   254→// ---- Initiative list ------------------------------------------------------
+   255→
+   256→function InitiativeList({
+   257→  statusFilter,
+   258→  currentUserId,
+   259→  isGM,
+   260→  onMutated,
+   261→}: {
+   262→  statusFilter: StatusFilter;
+   263→  currentUserId: string;
+   264→  isGM: boolean;
+   265→  onMutated: () => void;
+   266→}) {
+   267→  const { data, isLoading } = useQuery({
+   268→    queryKey: ["initiatives", statusFilter],
+   269→    queryFn: () =>
+   270→      apiGet<{ initiatives: InitiativeWithUser[] }>(
+   271→        `/api/initiatives?status=${statusFilter}`
+   272→      ),
+   273→  });
+   274→
+   275→  const initiatives = data?.initiatives || [];
+   276→
+   277→  return (
+   278→    <Card className="p-4 lg:p-5">
+   279→      <SectionHeader
+   280→        title="Senarai Inisiatif"
+   281→        subtitle={
+   282→          statusFilter === "all"
+   283→            ? "Semua inisiatif"
+   284→            : `Tapisan: ${statusFilter}`
+   285→        }
+   286→        icon={FileText}
+   287→      />
+   288→
+   289→      {isLoading ? (
+   290→        <div className="space-y-3">
+   291→          {[...Array(3)].map((_, i) => (
+   292→            <div
+   293→              key={i}
+   294→              className="h-28 rounded-md border border-border bg-muted/30 animate-pulse"
+   295→            />
+   296→          ))}
+   297→        </div>
+   298→      ) : initiatives.length === 0 ? (
+   299→        <EmptyState
+   300→          icon={Lightbulb}
+   301→          title="Tiada inisiatif"
+   302→          description="Inisiatif yang dihantar akan dipaparkan di sini untuk pengesahan GM."
+   303→        />
+   304→      ) : (
+   305→        <div className="space-y-3 max-h-[640px] overflow-y-auto scroll-slim pr-1">
+   306→          <AnimatePresence initial={false}>
+   307→            {initiatives.map((init) => (
+   308→              <motion.div
+   309→                key={init.id}
+   310→                layout
+   311→                initial={{ opacity: 0, y: 8 }}
+   312→                animate={{ opacity: 1, y: 0 }}
+   313→                exit={{ opacity: 0, y: -8 }}
+   314→                transition={{ duration: 0.2 }}
+   315→              >
+   316→                <InitiativeCard
+   317→                  initiative={init}
+   318→                  currentUserId={currentUserId}
+   319→                  isGM={isGM}
+   320→                  onMutated={onMutated}
+   321→                />
+   322→              </motion.div>
+   323→            ))}
+   324→          </AnimatePresence>
+   325→        </div>
+   326→      )}
+   327→    </Card>
+   328→  );
+   329→}
+   330→
+   331→function InitiativeCard({
+   332→  initiative,
+   333→  currentUserId,
+   334→  isGM,
+   335→  onMutated,
+   336→}: {
+   337→  initiative: InitiativeWithUser;
+   338→  currentUserId: string;
+   339→  isGM: boolean;
+   340→  onMutated: () => void;
+   341→}) {
+   342→  const [expanded, setExpanded] = useState(false);
+   343→  const statusMeta = INITIATIVE_STATUS_META[initiative.status] || INITIATIVE_STATUS_META.Dihantar;
+   344→  const impact = initiative.impactLevel as ImpactLevel;
+   345→  const impactMeta = IMPACT_META[impact];
+   346→  const owner = initiative.user;
+   347→  const ownerName = owner?.name || "Staf";
+   348→  const ownerPosition = owner?.position || "";
+   349→  const avatarColor = owner?.avatarColor || "#1F3A5F";
+   350→
+   351→  const isOwn = initiative.userId === currentUserId;
+   352→  const canVerify = isGM && initiative.status === "Dihantar";
+   353→
+   354→  const hasDetails = Boolean(initiative.problem || initiative.action || initiative.outcome);
+   355→
+   356→  return (
+   357→    <div className="rounded-md border border-border bg-background hover:border-accent/30 transition-colors">
+   358→      {/* Card header */}
+   359→      <div className="flex items-start gap-3 p-3 lg:p-4">
+   360→        <Avatar className="w-9 h-9 shrink-0" style={{ backgroundColor: avatarColor }}>
+   361→          <AvatarFallback
+   362→            className="text-white text-xs font-semibold"
+   363→            style={{ backgroundColor: avatarColor }}
+   364→          >
+   365→            {initials(ownerName)}
+   366→          </AvatarFallback>
+   367→        </Avatar>
+   368→
+   369→        <div className="flex-1 min-w-0">
+   370→          <div className="flex items-start justify-between gap-2 flex-wrap">
+   371→            <div className="min-w-0">
+   372→              <div className="flex items-center gap-1.5 flex-wrap">
+   373→                <h3 className="text-sm font-semibold truncate">{initiative.title}</h3>
+   374→                {isOwn && (
+   375→                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+   376→                    Anda
+   377→                  </Badge>
+   378→                )}
+   379→              </div>
+   380→              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+   381→                <span className="font-medium text-foreground/80">{ownerName}</span>
+   382→                {ownerPosition && (
+   383→                  <>
+   384→                    <span aria-hidden>·</span>
+   385→                    <span className="truncate">{ownerPosition}</span>
+   386→                  </>
+   387→                )}
+   388→                <span aria-hidden>·</span>
+   389→                <span>{relativeTime(initiative.submittedAt)}</span>
+   390→              </div>
+   391→            </div>
+   392→
+   393→            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+   394→              <span
+   395→                className={cn(
+   396→                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium",
+   397→                  statusMeta.bg,
+   398→                  statusMeta.text
+   399→                )}
+   400→              >
+   401→                <span className={cn("w-1.5 h-1.5 rounded-full", statusMeta.dot)} />
+   402→                {statusMeta.label}
+   403→              </span>
+   404→              {initiative.status === "Disahkan" && impactMeta && (
+   405→                <span
+   406→                  className={cn(
+   407→                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium",
+   408→                    impactMeta.bg,
+   409→                    impactMeta.text
+   410→                  )}
+   411→                  title={`Impak ${impactMeta.label} = ${POINTS[impact]} mata`}
+   412→                >
+   413→                  <Sparkles className="w-3 h-3" />
+   414→                  {impactMeta.label} · {initiative.points} mata
+   415→                </span>
+   416→              )}
+   417→            </div>
+   418→          </div>
+   419→
+   420→          {/* Outcome preview */}
+   421→          {initiative.outcome && (
+   422→            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+   423→              {initiative.outcome}
+   424→            </p>
+   425→          )}
+   426→
+   427→          {/* Action row */}
+   428→          <div className="flex items-center gap-2 mt-2 flex-wrap">
+   429→            {hasDetails && (
+   430→              <button
+   431→                onClick={() => setExpanded((v) => !v)}
+   432→                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+   433→              >
+   434→                {expanded ? (
+   435→                  <ChevronDown className="w-3.5 h-3.5" />
+   436→                ) : (
+   437→                  <ChevronRight className="w-3.5 h-3.5" />
+   438→                )}
+   439→                {expanded ? "Tutup butiran" : "Lihat butiran"}
+   440→              </button>
+   441→            )}
+   442→            {initiative.evidenceLinks && initiative.evidenceLinks.length > 0 && (
+   443→              <div className="flex items-center gap-1 flex-wrap">
+   444→                {initiative.evidenceLinks.slice(0, 2).map((link, i) => (
+   445→                  <a
+   446→                    key={i}
+   447→                    href={link}
+   448→                    target="_blank"
+   449→                    rel="noopener noreferrer"
+   450→                    className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:border-accent/40 transition-colors max-w-[180px] truncate"
+   451→                    title={link}
+   452→                  >
+   453→                    <Paperclip className="w-3 h-3 shrink-0" />
+   454→                    <span className="truncate">{link.replace(/^https?:\/\//, "")}</span>
+   455→                    <ExternalLink className="w-3 h-3 shrink-0 opacity-60" />
+   456→                  </a>
+   457→                ))}
+   458→                {initiative.evidenceLinks.length > 2 && (
+   459→                  <span className="text-xs text-muted-foreground">
+   460→                    +{initiative.evidenceLinks.length - 2} lagi
+   461→                  </span>
+   462→                )}
+   463→              </div>
+   464→            )}
+   465→          </div>
+   466→        </div>
+   467→      </div>
+   468→
+   469→      {/* Expandable details */}
+   470→      <AnimatePresence initial={false}>
+   471→        {expanded && hasDetails && (
+   472→          <motion.div
+   473→            initial={{ height: 0, opacity: 0 }}
+   474→            animate={{ height: "auto", opacity: 1 }}
+   475→            exit={{ height: 0, opacity: 0 }}
+   476→            transition={{ duration: 0.2 }}
+   477→            className="overflow-hidden"
+   478→          >
+   479→            <div className="px-3 lg:px-4 pb-3 lg:pb-4 pt-1 grid grid-cols-1 gap-2.5">
+   480→              <DetailRow icon={Target} label="Masalah" text={initiative.problem} />
+   481→              <DetailRow icon={Rocket} label="Tindakan" text={initiative.action} />
+   482→              <DetailRow icon={Award} label="Hasil" text={initiative.outcome} />
+   483→              {initiative.verifiedAt && (
+   484→                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+   485→                  <Clock className="w-3.5 h-3.5" />
+   486→                  Disahkan pada {formatDate(initiative.verifiedAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+   487→                </div>
+   488→              )}
+   489→              {initiative.gmComment && (
+   490→                <div className="mt-1 p-2.5 rounded-md bg-muted/50 border border-border">
+   491→                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+   492→                    Komen GM
+   493→                  </div>
+   494→                  <p className="text-xs text-foreground/90">{initiative.gmComment}</p>
+   495→                </div>
+   496→              )}
+   497→            </div>
+   498→          </motion.div>
+   499→        )}
+   500→      </AnimatePresence>
+   501→
+   502→      {/* Verify form (GM + Dihantar) */}
+   503→      {canVerify && (
+   504→        <VerifyForm initiative={initiative} onDone={onMutated} />
+   505→      )}
+   506→    </div>
+   507→  );
+   508→}
+   509→
+   510→function DetailRow({
+   511→  icon: Icon,
+   512→  label,
+   513→  text,
+   514→}: {
+   515→  icon: React.ComponentType<{ className?: string }>;
+   516→  label: string;
+   517→  text?: string;
+   518→}) {
+   519→  if (!text) return null;
+   520→  return (
+   521→    <div className="flex items-start gap-2">
+   522→      <Icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+   523→      <div className="min-w-0">
+   524→        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+   525→          {label}
+   526→        </span>
+   527→        <p className="text-xs text-foreground/90 mt-0.5 whitespace-pre-wrap">{text}</p>
+   528→      </div>
+   529→    </div>
+   530→  );
+   531→}
+   532→
+   533→// ---- Verify form ----------------------------------------------------------
+   534→
+   535→function VerifyForm({
+   536→  initiative,
+   537→  onDone,
+   538→}: {
+   539→  initiative: InitiativeWithUser;
+   540→  onDone: () => void;
+   541→}) {
+   542→  const [impact, setImpact] = useState<ImpactLevel>("Sederhana");
+   543→  const [comment, setComment] = useState("");
+   544→  const [submitting, setSubmitting] = useState<"Disahkan" | "Ditolak" | null>(null);
+   545→
+   546→  const handleVerify = async (status: "Disahkan" | "Ditolak") => {
+   547→    setSubmitting(status);
+   548→    try {
+   549→      await apiPatch(`/api/initiatives/${initiative.id}/verify`, {
+   550→        status,
+   551→        impactLevel: status === "Disahkan" ? impact : initiative.impactLevel,
+   552→        gmComment: comment.trim(),
+   553→      });
+   554→      toast.success(
+   555→        status === "Disahkan"
+   556→          ? `Inisiatif disahkan (${POINTS[impact]} mata).`
+   557→          : "Inisiatif ditolak."
+   558→      );
+   559→      setComment("");
+   560→      onDone();
+   561→    } catch (e: any) {
+   562→      toast.error(e?.message || "Gagal mengesahkan inisiatif.");
+   563→    } finally {
+   564→      setSubmitting(null);
+   565→    }
+   566→  };
+   567→
+   568→  return (
+   569→    <div className="border-t border-border bg-muted/20 p-3 lg:p-4">
+   570→      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
+   571→        <Award className="w-3.5 h-3.5 text-accent" />
+   572→        Pengesahan GM
+   573→      </div>
+   574→      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   575→        <div className="space-y-1.5">
+   576→          <Label className="text-xs">Tahap Impak</Label>
+   577→          <Select value={impact} onValueChange={(v) => setImpact(v as ImpactLevel)}>
+   578→            <SelectTrigger className="h-9">
+   579→              <SelectValue />
+   580→            </SelectTrigger>
+   581→            <SelectContent>
+   582→              {(Object.keys(POINTS) as ImpactLevel[]).map((lvl) => (
+   583→                <SelectItem key={lvl} value={lvl}>
+   584→                  {lvl} · {POINTS[lvl]} mata
+   585→                </SelectItem>
+   586→              ))}
+   587→            </SelectContent>
+   588→          </Select>
+   589→        </div>
+   590→        <div className="space-y-1.5">
+   591→          <Label className="text-xs">Komen GM (pilihan)</Label>
+   592→          <Input
+   593→            value={comment}
+   594→            onChange={(e) => setComment(e.target.value)}
+   595→            placeholder="Contoh: Inisiatif yang baik..."
+   596→            className="h-9"
+   597→          />
+   598→        </div>
+   599→      </div>
+   600→      <div className="flex items-center gap-2 mt-3 flex-wrap">
+   601→        <Button
+   602→          size="sm"
+   603→          onClick={() => handleVerify("Disahkan")}
+   604→          disabled={submitting !== null}
+   605→        >
+   606→          {submitting === "Disahkan" ? (
+   607→            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+   608→          ) : (
+   609→            <CheckCircle2 className="w-4 h-4 mr-1" />
+   610→          )}
+   611→          Sahkan
+   612→        </Button>
+   613→        <Button
+   614→          size="sm"
+   615→          variant="outline"
+   616→          onClick={() => handleVerify("Ditolak")}
+   617→          disabled={submitting !== null}
+   618→        >
+   619→          {submitting === "Ditolak" ? (
+   620→            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+   621→          ) : (
+   622→            <XCircle className="w-4 h-4 mr-1" />
+   623→          )}
+   624→          Tolak
+   625→        </Button>
+   626→      </div>
+   627→    </div>
+   628→  );
+   629→}
+   630→
+   631→// ---- Initiative wall ------------------------------------------------------
+   632→
+   633→function InitiativeWall() {
+   634→  const { data, isLoading } = useQuery({
+   635→    queryKey: ["initiatives", "Disahkan"],
+   636→    queryFn: () =>
+   637→      apiGet<{ initiatives: InitiativeWithUser[] }>("/api/initiatives?status=Disahkan"),
+   638→  });
+   639→
+   640→  const confirmed = data?.initiatives || [];
+   641→
+   642→  return (
+   643→    <Card className="overflow-hidden">
+   644→      {/* Celebratory header */}
+   645→      <div className="bg-gradient-to-r from-accent to-[#1F3A5F] px-4 lg:px-5 py-4">
+   646→        <div className="flex items-center gap-2.5">
+   647→          <div className="w-9 h-9 rounded-md bg-white/15 flex items-center justify-center backdrop-blur-sm">
+   648→            <Trophy className="w-5 h-5 text-white" />
+   649→          </div>
+   650→          <div>
+   651→            <h2 className="text-base font-semibold text-white tracking-tight">
+   652→              Dinding Inisiatif
+   653→            </h2>
+   654→            <p className="text-xs text-white/80">
+   655→              Pengiktirafan untuk sumbangan luar biasa pasukan
+   656→            </p>
+   657→          </div>
+   658→        </div>
+   659→      </div>
+   660→
+   661→      <div className="p-4 lg:p-5">
+   662→        {isLoading ? (
+   663→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+   664→            {[...Array(3)].map((_, i) => (
+   665→              <div
+   666→                key={i}
+   667→                className="h-24 rounded-md border border-border bg-muted/30 animate-pulse"
+   668→              />
+   669→            ))}
+   670→          </div>
+   671→        ) : confirmed.length === 0 ? (
+   672→          <EmptyState
+   673→            icon={Trophy}
+   674→            title="Dinding masih kosong"
+   675→            description="Inisiatif yang disahkan oleh GM akan dipaparkan di sini sebagai pengiktirafan."
+   676→          />
+   677→        ) : (
+   678→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[520px] overflow-y-auto scroll-slim pr-1">
+   679→            {confirmed.map((init, idx) => (
+   680→              <WallCard key={init.id} initiative={init} index={idx} />
+   681→            ))}
+   682→          </div>
+   683→        )}
+   684→      </div>
+   685→    </Card>
+   686→  );
+   687→}
+   688→
+   689→function WallCard({
+   690→  initiative,
+   691→  index,
+   692→}: {
+   693→  initiative: InitiativeWithUser;
+   694→  index: number;
+   695→}) {
+   696→  const owner = initiative.user;
+   697→  const ownerName = owner?.name || "Staf";
+   698→  const avatarColor = owner?.avatarColor || "#1F3A5F";
+   699→  const impact = initiative.impactLevel as ImpactLevel;
+   700→  const impactMeta = IMPACT_META[impact];
+   701→
+   702→  return (
+   703→    <motion.div
+   704→      initial={{ opacity: 0, scale: 0.96 }}
+   705→      animate={{ opacity: 1, scale: 1 }}
+   706→      transition={{ duration: 0.25, delay: Math.min(index * 0.05, 0.4) }}
+   707→      className="relative rounded-md border border-border bg-background p-3.5 hover:border-accent/40 hover:shadow-sm transition-all"
+   708→    >
+   709→      {/* Decorative star */}
+   710→      <div className="absolute top-2 right-2 text-accent/15">
+   711→        <Sparkles className="w-4 h-4" />
+   712→      </div>
+   713→
+   714→      <div className="flex items-start gap-2.5">
+   715→        <Avatar className="w-9 h-9 shrink-0" style={{ backgroundColor: avatarColor }}>
+   716→          <AvatarFallback
+   717→            className="text-white text-xs font-semibold"
+   718→            style={{ backgroundColor: avatarColor }}
+   719→          >
+   720→            {initials(ownerName)}
+   721→          </AvatarFallback>
+   722→        </Avatar>
+   723→        <div className="min-w-0 flex-1">
+   724→          <div className="font-medium text-sm truncate">{ownerName}</div>
+   725→          {owner?.position && (
+   726→            <div className="text-[11px] text-muted-foreground truncate">
+   727→              {owner.position}
+   728→            </div>
+   729→          )}
+   730→        </div>
+   731→      </div>
+   732→
+   733→      <h4 className="text-sm font-medium mt-2.5 leading-snug line-clamp-2">
+   734→        {initiative.title}
+   735→      </h4>
+   736→
+   737→      <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border">
+   738→        <span
+   739→          className={cn(
+   740→            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
+   741→            impactMeta?.bg,
+   742→            impactMeta?.text
+   743→          )}
+   744→        >
+   745→          <span className={cn("w-1.5 h-1.5 rounded-full", impactMeta?.dot)} />
+   746→          {impactMeta?.label}
+   747→        </span>
+   748→        <div className="flex items-baseline gap-0.5">
+   749→          <span className="text-lg font-semibold tabular-nums text-accent">
+   750→            {initiative.points}
+   751→          </span>
+   752→          <span className="text-[10px] text-muted-foreground">mata</span>
+   753→        </div>
+   754→      </div>
+   755→    </motion.div>
+   756→  );
+   757→}
+   758→
+   759→// ---- Create dialog --------------------------------------------------------
+   760→
+   761→function CreateInitiativeDialog({
+   762→  open,
+   763→  onOpenChange,
+   764→  onCreated,
+   765→}: {
+   766→  open: boolean;
+   767→  onOpenChange: (o: boolean) => void;
+   768→  onCreated: () => void;
+   769→}) {
+   770→  const [title, setTitle] = useState("");
+   771→  const [problem, setProblem] = useState("");
+   772→  const [action, setAction] = useState("");
+   773→  const [outcome, setOutcome] = useState("");
+   774→  const [links, setLinks] = useState<string[]>([""]);
+   775→  const [submitting, setSubmitting] = useState(false);
+   776→
+   777→  const reset = () => {
+   778→    setTitle("");
+   779→    setProblem("");
+   780→    setAction("");
+   781→    setOutcome("");
+   782→    setLinks([""]);
+   783→  };
+   784→
+   785→  const handleClose = (o: boolean) => {
+   786→    onOpenChange(o);
+   787→    if (!o) reset();
+   788→  };
+   789→
+   790→  const addLink = () => setLinks((l) => [...l, ""]);
+   791→  const updateLink = (i: number, v: string) =>
+   792→    setLinks((l) => l.map((link, idx) => (idx === i ? v : link)));
+   793→  const removeLink = (i: number) =>
+   794→    setLinks((l) => (l.length > 1 ? l.filter((_, idx) => idx !== i) : l));
+   795→
+   796→  const handleSubmit = async () => {
+   797→    if (!title.trim()) {
+   798→      toast.error("Sila isi tajuk inisiatif.");
+   799→      return;
+   800→    }
+   801→    setSubmitting(true);
+   802→    try {
+   803→      const evidenceLinks = links.map((l) => l.trim()).filter(Boolean);
+   804→      await apiPost("/api/initiatives", {
+   805→        title: title.trim(),
+   806→        problem: problem.trim(),
+   807→        action: action.trim(),
+   808→        outcome: outcome.trim(),
+   809→        evidenceLinks,
+   810→      });
+   811→      toast.success("Inisiatif dihantar untuk pengesahan GM.");
+   812→      handleClose(false);
+   813→      onCreated();
+   814→    } catch (e: any) {
+   815→      toast.error(e?.message || "Gagal menghantar inisiatif.");
+   816→    } finally {
+   817→      setSubmitting(false);
+   818→    }
+   819→  };
+   820→
+   821→  return (
+   822→    <Dialog open={open} onOpenChange={handleClose}>
+   823→      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto scroll-slim">
+   824→        <DialogHeader>
+   825→          <DialogTitle className="flex items-center gap-2">
+   826→            <Lightbulb className="w-4 h-4 text-accent" />
+   827→            Hantar Inisiatif Baharu
+   828→          </DialogTitle>
+   829→        </DialogHeader>
+   830→
+   831→        <div className="space-y-3.5 py-2">
+   832→          <div className="space-y-1.5">
+   833→            <Label className="text-xs">
+   834→              Tajuk Inisiatif <span className="text-status-danger">*</span>
+   835→            </Label>
+   836→            <Input
+   837→              value={title}
+   838→              onChange={(e) => setTitle(e.target.value)}
+   839→              placeholder="Contoh: Automasi laporan mingguan jualan"
+   840→              className="h-9"
+   841→            />
+   842→          </div>
+   843→
+   844→          <div className="space-y-1.5">
+   845→            <Label className="text-xs">Masalah / Pencabar</Label>
+   846→            <Textarea
+   847→              value={problem}
+   848→              onChange={(e) => setProblem(e.target.value)}
+   849→              placeholder="Apakah masalah yang dikenal pasti?"
+   850→              rows={2}
+   851→            />
+   852→          </div>
+   853→
+   854→          <div className="space-y-1.5">
+   855→            <Label className="text-xs">Tindakan</Label>
+   856→            <Textarea
+   857→              value={action}
+   858→              onChange={(e) => setAction(e.target.value)}
+   859→              placeholder="Langkah yang diambil..."
+   860→              rows={2}
+   861→            />
+   862→          </div>
+   863→
+   864→          <div className="space-y-1.5">
+   865→            <Label className="text-xs">Hasil / Outcome</Label>
+   866→            <Textarea
+   867→              value={outcome}
+   868→              onChange={(e) => setOutcome(e.target.value)}
+   869→              placeholder="Apakah hasil yang dicapai?"
+   870→              rows={2}
+   871→            />
+   872→          </div>
+   873→
+   874→          <div className="space-y-1.5">
+   875→            <div className="flex items-center justify-between">
+   876→              <Label className="text-xs">Pautan Bukti (pilihan)</Label>
+   877→              <Button
+   878→                type="button"
+   879→                variant="ghost"
+   880→                size="sm"
+   881→                className="h-7 px-2 text-xs"
+   882→                onClick={addLink}
+   883→              >
+   884→                <Plus className="w-3.5 h-3.5 mr-1" /> Tambah pautan
+   885→              </Button>
+   886→            </div>
+   887→            <div className="space-y-2">
+   888→              {links.map((link, i) => (
+   889→                <div key={i} className="flex items-center gap-1.5">
+   890→                  <Input
+   891→                    value={link}
+   892→                    onChange={(e) => updateLink(i, e.target.value)}
+   893→                    placeholder="https://..."
+   894→                    className="h-9"
+   895→                  />
+   896→                  {links.length > 1 && (
+   897→                    <Button
+   898→                      type="button"
+   899→                      variant="ghost"
+   900→                      size="sm"
+   901→                      className="h-9 w-9 p-0 text-muted-foreground hover:text-status-danger"
+   902→                      onClick={() => removeLink(i)}
+   903→                      aria-label="Buang pautan"
+   904→                    >
+   905→                      <Trash2 className="w-4 h-4" />
+   906→                    </Button>
+   907→                  )}
+   908→                </div>
+   909→              ))}
+   910→            </div>
+   911→          </div>
+   912→        </div>
+   913→
+   914→        <DialogFooter>
+   915→          <Button variant="outline" onClick={() => handleClose(false)} disabled={submitting}>
+   916→            Batal
+   917→          </Button>
+   918→          <Button onClick={handleSubmit} disabled={submitting}>
+   919→            {submitting ? (
+   920→              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+   921→            ) : (
+   922→              <Send className="w-4 h-4 mr-1" />
+   923→            )}
+   924→            Hantar
+   925→          </Button>
+   926→        </DialogFooter>
+   927→      </DialogContent>
+   928→    </Dialog>
+   929→  );
+   930→}
+   931→

@@ -1,0 +1,245 @@
+// EDUOASIS TASK360 - Staff Performance & Task Monitoring System
+// Prisma schema for Al Amin Edu Oasis
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USERS & AUTH
+// ============================================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String   @default("demo123") // dummy only
+  name          String
+  role          String   @default("STAF") // GM | STAF
+  position      String   @default("")
+  weeklyHours   Int      @default(40)
+  avatarColor   String   @default("#0E7C86")
+  startDate     DateTime
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tasksAssigned       Task[]      @relation("TaskAssignee")
+  tasksCreated        Task[]      @relation("TaskCreator")
+  timeLogs            TimeLog[]
+  qualityReviewsGiven QualityReview[]
+  initiatives         Initiative[]
+  comments            Comment[]
+  blockersReported    Blocker[]
+  accountabilityRatings AccountabilityRating[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]   @relation("AuditActor")
+}
+
+// ============================================================
+// TASKS
+// ============================================================
+
+model Task {
+  id              String    @id @default(cuid())
+  title           String
+  description     String    @default("")
+  assigneeId      String
+  assignee        User      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById     String
+  createdBy       User      @relation("TaskCreator", fields: [createdById], references: [id])
+  category        String    @default("Lain") // Latihan | Perundingan | Pemasaran | Pentadbiran | Kewangan | Sekolah Berlesen | Lain
+  priority        String    @default("Sederhana") // Rendah | Sederhana | Tinggi | Segera
+  status          String    @default("Belum Mula") // Belum Mula | Dalam Proses | Menunggu Semakan | Selesai | Disekat | Dibatalkan
+  progress        Int       @default(0) // 0-100
+  complexity      Int       @default(1) // 1-3
+  estimatedHours  Float    @default(0)
+  startDate       DateTime
+  dueDate         DateTime
+  completedAt     DateTime?
+  extendedDueDate DateTime?
+  reworkCount     Int       @default(0)
+  linksJson       String    @default("[]") // JSON string array
+  isPersonal      Boolean   @default(false) // staff-created personal task
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  timeLogs           TimeLog[]
+  qualityReviews     QualityReview[]
+  comments           Comment[]
+  blockers           Blocker[]
+  extensionRequests  ExtensionRequest[]
+  taskHistory         TaskHistory[]
+}
+
+model TaskHistory {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String
+  field     String
+  oldValue  String?
+  newValue  String?
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// TIME LOGS
+// ============================================================
+
+model TimeLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime
+  hours     Float
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// QUALITY REVIEWS (GM rating on completed tasks)
+// ============================================================
+
+model QualityReview {
+  id               String   @id @default(cuid())
+  taskId           String
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewerId       String
+  reviewer         User     @relation(fields: [reviewerId], references: [id])
+  accuracy         Int      @default(3) // 1-5
+  completeness     Int      @default(3)
+  professionalism  Int      @default(3)
+  specCompliance   Int      @default(3)
+  comment          String   @default("")
+  createdAt        DateTime @default(now())
+}
+
+// ============================================================
+// INITIATIVES & PROBLEM SOLVING
+// ============================================================
+
+model Initiative {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  title         String
+  problem       String    @default("")
+  action        String    @default("")
+  outcome       String    @default("")
+  evidenceJson  String    @default("[]") // JSON string array of links
+  impactLevel   String    @default("Kecil") // Kecil | Sederhana | Besar
+  points        Int       @default(0)
+  status        String    @default("Dihantar") // Dihantar | Disahkan | Ditolak
+  submittedAt   DateTime  @default(now())
+  verifiedAt    DateTime?
+  gmComment     String    @default("")
+  createdAt     DateTime  @default(now())
+}
+
+// ============================================================
+// COMMUNICATION: comments, blockers
+// ============================================================
+
+model Comment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  body       String
+  replyToId  String?  // thread parent comment id
+  isFromGM   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Blocker {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reportedById String
+  reportedBy  User      @relation(fields: [reportedById], references: [id])
+  type        String    @default("Lain") // Maklumat | Sumber | Klien | Teknikal | Lain
+  description String
+  helpNeeded  String    @default("")
+  status      String    @default("Terbuka") // Terbuka | Selesai
+  reportedAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+}
+
+// ============================================================
+// ACCOUNTABILITY RATINGS (monthly GM rating)
+// ============================================================
+
+model AccountabilityRating {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  period    String   // e.g. 2026-10
+  rating    Int      // 1-5
+  comment   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, period])
+}
+
+// ============================================================
+// EXTENSION REQUESTS
+// ============================================================
+
+model ExtensionRequest {
+  id            String   @id @default(cuid())
+  taskId        String
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedDate DateTime
+  reason        String
+  status        String   @default("Menunggu") // Menunggu | Diluluskan | Ditolak
+  createdAt     DateTime @default(now())
+}
+
+// ============================================================
+// NOTIFICATIONS, AUDIT LOGS, SETTINGS
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // task_assigned | deadline_soon | deadline_passed | task_returned | comment_new | blocker_reported | initiative_verified | extension_request | quality_reviewed
+  title     String
+  message   String
+  link      String   @default("")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation("AuditActor", fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String   @default("")
+  detail    String   @default("")
+  timestamp DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default("singleton")
+  // dimension weights JSON: {"taskCompletion":20,"timeliness":15,"workQuality":25,"initiative":10,"communication":15,"productivity":15}
+  weightsJson      String @default("{\"taskCompletion\":20,\"timeliness\":15,\"workQuality\":25,\"initiative\":10,\"communication\":15,\"productivity\":15}")
+  initiativeTargetMonthly Int @default(20)
+  initiativeTargetQuarterly Int @default(60)
+  // grade bands JSON
+  gradeBandsJson   String @default("{\"A\":{\"min\":90,\"max\":100},\"B\":{\"min\":75,\"max\":89},\"C\":{\"min\":60,\"max\":74},\"D\":{\"min\":40,\"max\":59},\"E\":{\"min\":0,\"max\":39}}")
+  workingDaysJson  String @default("[1,2,3,4,5]") // Mon-Fri
+  holidaysJson     String @default("[]") // array of ISO date strings
+  updatedAt        DateTime @updatedAt
+}
