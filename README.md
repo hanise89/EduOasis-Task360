@@ -43,7 +43,7 @@ Built for **Al Amin Edu Oasis** (training & consultancy provider). An internal w
 
 - **Framework**: Next.js 16 (App Router) + TypeScript 5
 - **Styling**: Tailwind CSS 4 + shadcn/ui (New York) + Lucide icons
-- **Database**: Prisma ORM + SQLite (real persistent dummy database)
+- **Database**: Supabase (PostgreSQL 17) via Prisma ORM — connection pooler (Supavisor)
 - **State**: Zustand (client) + TanStack Query (server)
 - **Charts**: Recharts (radar, line, bar, heatmap)
 - **Drag & Drop**: @dnd-kit/core
@@ -57,24 +57,52 @@ Built for **Al Amin Edu Oasis** (training & consultancy provider). An internal w
 
 ### Prerequisites
 - Node.js 18+ and [Bun](https://bun.sh/) (or npm/pnpm/yarn)
+- A [Supabase](https://supabase.com) project (free tier works fine)
 
 ### Installation
 
 ```bash
-# 1. Install dependencies
+# 1. Clone and install dependencies
+git clone https://github.com/hanise89/EduOasis-Task360.git
+cd EduOasis-Task360
 bun install
 
-# 2. Set up the database (creates SQLite file + applies schema + seeds demo data)
+# 2. Create your Supabase project at https://supabase.com
+#    - Note your Project URL, Project Ref, and database password
+#    - The project region must match the pooler URL region
+
+# 3. Copy the env template and fill in your Supabase credentials
+cp .env.example .env
+# Edit .env and replace YOUR_PROJECT_REF, YOUR_PASSWORD, YOUR_REGION, etc.
+# Example (ap-northeast-2 region):
+#   DATABASE_URL="postgresql://postgres.ULOXIK...:PASSWORD@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres"
+
+# 4. Push the Prisma schema to Supabase (creates 13 tables) + seed demo data
 bun run db:setup
 #   — or step by step:
-#   bun run db:push      # create schema
-#   bun run db:seed      # seed 1 GM + 6 staff + ~70 tasks over 3 months
+#   bun run db:generate   # generate Prisma Client for PostgreSQL
+#   bun run db:push       # create 13 tables in Supabase
+#   bun run db:seed       # seed 1 GM + 6 staff + 67 tasks + 17 initiatives (3 months)
 
-# 3. Start the dev server
+# 5. Start the dev server
 bun run dev
 ```
 
 The app runs on `http://localhost:3000`.
+
+### Finding your Supabase connection string
+
+In your Supabase dashboard, go to **Project Settings → Database → Connection string**.
+
+- **Recommended (Session mode pooler, port 5432)** — works for both migrations and runtime:
+  ```
+  postgresql://postgres.{PROJECT_REF}:{PASSWORD}@aws-0-{REGION}.pooler.supabase.com:5432/postgres
+  ```
+  The username must be `postgres.{PROJECT_REF}` (with the project ref appended).
+
+- **Transaction mode pooler (port 6543)** — runtime only, not for Prisma migrations.
+
+- **Direct connection (port 5432 on `db.{REF}.supabase.co`)** — IPv6 only, may be blocked in some networks.
 
 ### Demo Accounts
 | Role | Email | Password |
@@ -85,7 +113,7 @@ The app runs on `http://localhost:3000`.
 Or use the **quick demo login buttons** on the login page ("Sebagai GM" / "Sebagai Staf").
 
 ### Reset Demo Data
-Use the "Set Semula Data Demo" button in **Tetapan → Log Audit** to restore the original seed data at any time.
+Use the "Set Semula Data Demo" button in **Tetapan → Log Audit** to restore the original seed data at any time. This runs `prisma/seed.ts` which clears all tables and re-inserts the demo data.
 
 ---
 
@@ -93,11 +121,11 @@ Use the "Set Semula Data Demo" button in **Tetapan → Log Audit** to restore th
 
 ```
 prisma/
-├── schema.prisma        # All 12 entities: User, Task, TaskHistory, TimeLog,
+├── schema.prisma        # 13 entities: User, Task, TaskHistory, TimeLog,
 │                        #   QualityReview, Initiative, Comment, Blocker,
 │                        #   AccountabilityRating, ExtensionRequest,
 │                        #   Notification, AuditLog, Setting
-└── seed.ts              # Dummy data: 1 GM + 6 staff + ~70 tasks (3 months)
+└── seed.ts              # Dummy data: 1 GM + 6 staff + 67 tasks + 17 initiatives (3 months)
 
 src/
 ├── app/
@@ -152,13 +180,14 @@ The UI follows International Typographic Style (Swiss design) principles:
 
 ## Production Notes (v1.0 Prototype)
 
-This is a **prototype with a real dummy database** (Prisma + SQLite). It is not production-hardened:
+This is a **prototype with a real database** (Supabase / PostgreSQL via Prisma). It is not production-hardened:
 
 - Passwords are stored as plain text (`demo123`) — **must use hashing (bcrypt/argon2)** in production
 - Session uses signed cookies — upgrade to JWT + secure HTTP-only cookies for production
-- SQLite is single-file — swap to PostgreSQL/MySQL for concurrent users (just change `provider` in `schema.prisma`)
+- Database uses the Supabase connection pooler — for high-traffic production, consider read replicas + connection tuning
 - No CSRF protection on mutations — add for production
 - Demo data reset is destructive — gate behind admin confirmation in production
+- Supabase Row-Level Security (RLS) is **not enabled** — the app relies solely on application-layer role checks. Enable RLS policies for defense-in-depth before going to production.
 
 ### Future Phases (per PRD §14)
 - Real authentication (NextAuth.js with credentials/OAuth)
