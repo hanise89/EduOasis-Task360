@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { computeStaffScore } from "@/lib/scoring";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -33,4 +34,4 @@ export async function GET(req: NextRequest) {
     initiatives: initiatives.map(i => ({ id: i.id, title: i.title, impactLevel: i.impactLevel, points: i.points, verifiedAt: i.verifiedAt?.toISOString() || null })),
     accountabilityRatings: accRatings.map(a => ({ period: a.period, rating: a.rating, comment: a.comment })),
   });
-}
+});

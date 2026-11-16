@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM." }, { status: 403 });
   const logs = await db.auditLog.findMany({
@@ -16,4 +17,4 @@ export async function GET() {
       entity: l.entity, entityId: l.entityId, detail: l.detail, timestamp: l.timestamp.toISOString(),
     })),
   });
-}
+});

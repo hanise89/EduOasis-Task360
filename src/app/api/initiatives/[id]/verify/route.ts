@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
 const POINTS: Record<string, number> = { Kecil: 5, Sederhana: 10, Besar: 20 };
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM boleh mengesahkan." }, { status: 403 });
   const { id } = await params;
@@ -32,4 +33,4 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       gmComment: updated.gmComment,
     },
   });
-}
+});

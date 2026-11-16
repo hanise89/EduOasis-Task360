@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { computeAllStaffScores } from "@/lib/scoring";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM." }, { status: 403 });
   const { searchParams } = new URL(req.url);
@@ -24,4 +25,4 @@ export async function GET(req: NextRequest) {
       tasks: taskCounts.find(t => t.userId === s.id),
     })),
   });
-}
+});

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
 const POINTS: Record<string, number> = { Kecil: 5, Sederhana: 10, Besar: 20 };
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -22,9 +23,9 @@ export async function GET(req: NextRequest) {
       user: i.user ? { id: i.user.id, name: i.user.name, position: i.user.position, avatarColor: i.user.avatarColor } : undefined,
     })),
   });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const body = await req.json();
@@ -47,4 +48,4 @@ export async function POST(req: NextRequest) {
       gmComment: init.gmComment, user: { id: init.user!.id, name: init.user!.name, position: init.user!.position, avatarColor: init.user!.avatarColor },
     },
   });
-}
+});

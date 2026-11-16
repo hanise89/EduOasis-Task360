@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const where = user.role === "GM" ? {} : { id: user.id };
@@ -14,9 +15,9 @@ export async function GET() {
       startDate: u.startDate.toISOString(), active: u.active,
     })),
   });
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM boleh edit profil." }, { status: 403 });
   const body = await req.json();
@@ -26,4 +27,4 @@ export async function PATCH(req: NextRequest) {
     data: { actorId: user.id, action: "UPDATE_USER", entity: "user", entityId: id, detail: Object.keys(data).join(", ") },
   });
   return NextResponse.json({ user: { id: updated.id, name: updated.name, position: updated.position, weeklyHours: updated.weeklyHours, avatarColor: updated.avatarColor, startDate: updated.startDate.toISOString() } });
-}
+});

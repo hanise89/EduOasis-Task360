@@ -4,18 +4,54 @@ export async function api<T = any>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    credentials: "include",
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      credentials: "include",
+    });
+  } catch (e: any) {
+    // Network error: server unreachable, DNS failure, CORS, etc.
+    throw new Error(
+      "Tidak dapat hubungkan pelayan. Sila semak sambungan internet anda."
+    );
+  }
+
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // Non-JSON response (HTML 500 page, empty body, etc.)
+    if (!res.ok) {
+      throw new Error(
+        res.status === 500
+          ? "Ralat pelayan dalaman. Pasukan sokongan telah dimaklumkan."
+          : res.status === 503
+            ? "Pelayan pangkalan data tidak boleh dihubungi. Sila cuba lagi sebentar."
+            : `Ralat ${res.status}`
+      );
+    }
+  }
+
   if (!res.ok) {
-    const msg = data?.error || `Ralat ${res.status}`;
+    const msg =
+      data?.error ||
+      (res.status === 500
+        ? "Ralat pelayan dalaman."
+        : res.status === 503
+          ? "Pelayan pangkalan data tidak boleh dihubungi."
+          : res.status === 401
+            ? "Tidak dibenarkan."
+            : res.status === 403
+              ? "Anda tiada akses."
+              : res.status === 404
+                ? "Rekod tidak dijumpai."
+                : `Ralat ${res.status}`);
     throw new Error(msg);
   }
   return data as T;

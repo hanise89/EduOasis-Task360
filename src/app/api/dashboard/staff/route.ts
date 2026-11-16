@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { computeStaffScore } from "@/lib/scoring";
 import { getWorkloadForUser } from "@/lib/workload";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -59,4 +60,4 @@ export async function GET(req: NextRequest) {
     initiatives: initiatives.map(i => ({ id: i.id, title: i.title, status: i.status, impactLevel: i.impactLevel, points: i.points })),
     recentFeedback,
   });
-}
+});

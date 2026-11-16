@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -15,9 +16,9 @@ export async function GET(req: NextRequest) {
       user: r.user ? { id: r.user.id, name: r.user.name, position: r.user.position, avatarColor: r.user.avatarColor } : undefined,
     })),
   });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM boleh menilai." }, { status: 403 });
   const body = await req.json();
@@ -34,4 +35,4 @@ export async function POST(req: NextRequest) {
     data: { userId: body.userId, type: "accountability_rated", title: "Rating Akauntabiliti Diterima", message: `Penilaian ${period}: ${body.rating}/5`, link: "?view=performance" },
   });
   return NextResponse.json({ rating });
-}
+});

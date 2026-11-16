@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
 function taskToApi(t: any) {
   return {
@@ -22,7 +23,7 @@ function taskToApi(t: any) {
   };
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -72,9 +73,9 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json({ tasks: tasks.map(taskToApi) });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const body = await req.json();
@@ -116,4 +117,4 @@ export async function POST(req: NextRequest) {
     });
   }
   return NextResponse.json({ task: taskToApi(task) });
-}
+});

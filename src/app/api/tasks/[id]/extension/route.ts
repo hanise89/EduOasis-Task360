@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { id } = await params;
@@ -19,9 +20,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data: { userId: task.createdById, type: "extension_request", title: "Permintaan Lanjutan Tarikh", message: body.reason?.slice(0, 80) || "", link: `?view=tasks&id=${id}` },
   });
   return NextResponse.json({ extension: { ...ext, requestedDate: ext.requestedDate.toISOString(), createdAt: ext.createdAt.toISOString() } });
-}
+});
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM boleh meluluskan." }, { status: 403 });
   const { id } = await params;
@@ -37,4 +38,4 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
   return NextResponse.json({ extension: { ...updated, requestedDate: updated.requestedDate.toISOString(), createdAt: updated.createdAt.toISOString() } });
-}
+});

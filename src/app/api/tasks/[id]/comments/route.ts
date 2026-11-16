@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Tidak dibenarkan." }, { status: 401 });
   const { id } = await params;
@@ -34,4 +35,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       author: comment.author ? { id: comment.author.id, name: comment.author.name, role: comment.author.role, avatarColor: comment.author.avatarColor } : undefined,
     },
   });
-}
+});

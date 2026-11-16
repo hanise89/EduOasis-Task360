@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { computeAllStaffScores } from "@/lib/scoring";
 import { getWorkloadForAllStaff } from "@/lib/workload";
+import { withErrorHandler } from "@/lib/error-handler";
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser();
   if (!user || user.role !== "GM") return NextResponse.json({ error: "Hanya GM." }, { status: 403 });
   const { searchParams } = new URL(req.url);
@@ -74,4 +75,4 @@ export async function GET(req: NextRequest) {
       overloadedStaff: overloaded.map(w => ({ userId: w.userId, userName: w.userName, status: w.status, utilisation: w.utilisation, activeTasks: w.activeTasks })),
     },
   });
-}
+});
